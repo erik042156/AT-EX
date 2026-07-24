@@ -1,0 +1,15 @@
+{
+  "valid_user": {
+    "name": "",
+    "email": "",
+    "password": ""
+  },
+  "reused_login_user": {
+    "name": "",
+    "email": "",
+    "password": ""
+  },
+  "nonexistent_email_user": {
+    "email": ""
+  }
+}

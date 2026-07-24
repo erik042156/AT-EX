@@ -1,0 +1,11 @@
+.env
+screenshots/*
+!screenshots/.gitkeep
+reports/*
+!reports/.gitkeep
+logs/*
+!logs/.gitkeep
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
