@@ -1,15 +1,65 @@
 {
-  "valid_user": {
-    "name": "",
-    "email": "",
-    "password": ""
+  "signup": {
+    "valid_signup": {
+      "name": "John Doe",
+      "email": "newuser011@example.com",
+      "password": "password123",
+      "first_name": "John",
+      "last_name": "Doe",
+      "address": "123 Test Street",
+      "country": "United States",
+      "state": "California",
+      "city": "Los Angeles",
+      "zipcode": "90001",
+      "mobile_number": "1234567890"
+    },
+    "relogin_signup": {
+      "name": "Jane Doe",
+      "email": "newuser012@example.com",
+      "password": "securepass456",
+      "first_name": "Jane",
+      "last_name": "Doe",
+      "address": "456 Sample Ave",
+      "country": "United States",
+      "state": "New York",
+      "city": "New York",
+      "zipcode": "10001",
+      "mobile_number": "9876543210"
+    },
+    "india_default_signup": {
+      "name": "Alex Kim",
+      "email": "newuser003@example.com",
+      "password": "password789",
+      "first_name": "Alex",
+      "last_name": "Kim",
+      "address": "789 Default Road",
+      "country": "India",
+      "state": "Delhi",
+      "city": "Delhi",
+      "zipcode": "110001",
+      "mobile_number": "9998887777"
+    }
   },
-  "reused_login_user": {
-    "name": "",
-    "email": "",
-    "password": ""
-  },
-  "nonexistent_email_user": {
-    "email": ""
+  "shared_login_accounts": {
+    "valid_account": {
+      "name": "John Doe",
+      "email": "newuser001@example.com",
+      "password": "password123",
+      "expected_username": "John Doe"
+    },
+    "relogin_account": {
+      "name": "Jane Doe",
+      "email": "newuser002@example.com",
+      "password": "securepass456",
+      "expected_username": "Jane Doe"
+    },
+    "invalid_password": {
+      "email": "newuser001@example.com",
+      "password": "wrongpassword"
+    },
+    "nonexistent_email": {
+      "email": "nonexistent@example.com",
+      "password": "anypassword123"
+    }
   }
 }

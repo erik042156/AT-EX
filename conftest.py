@@ -1,9 +1,14 @@
+import json
 from datetime import datetime
 
 import pytest
 from selenium import webdriver
 
 from config.settings import HEADLESS
+from pages.login_page import LoginPage
+
+ACCOUNTS_DATA_PATH = "test_data/accounts.json"
+SEARCH_KEYWORDS_DATA_PATH = "test_data/search_keywords.json"
 
 
 @pytest.fixture(scope="function")
@@ -14,6 +19,73 @@ def driver():
   drv = webdriver.Chrome(options=options)
   yield drv
   drv.quit()
+
+
+@pytest.fixture(scope="session")
+def accounts_data():
+  with open(ACCOUNTS_DATA_PATH, encoding="utf-8") as f:
+    return json.load(f)
+
+
+@pytest.fixture
+def valid_signup_data(accounts_data):
+  return accounts_data["signup"]["valid_signup"]
+
+
+@pytest.fixture
+def relogin_signup_data(accounts_data):
+  return accounts_data["signup"]["relogin_signup"]
+
+
+@pytest.fixture
+def valid_login_credentials(accounts_data):
+  return accounts_data["shared_login_accounts"]["valid_account"]
+
+
+@pytest.fixture
+def relogin_credentials(accounts_data):
+  return accounts_data["shared_login_accounts"]["relogin_account"]
+
+
+@pytest.fixture
+def invalid_login_credentials(accounts_data):
+  return accounts_data["shared_login_accounts"]["invalid_password"]
+
+
+@pytest.fixture
+def nonexistent_login_credentials(accounts_data):
+  return accounts_data["shared_login_accounts"]["nonexistent_email"]
+
+
+@pytest.fixture
+def logged_in_user(driver, valid_login_credentials):
+  login_page = LoginPage(driver)
+  login_page.navigate_to_login()
+  login_page.enter_email(valid_login_credentials["email"])
+  login_page.enter_password(valid_login_credentials["password"])
+  login_page.click_login_button()
+  return valid_login_credentials
+
+
+@pytest.fixture(scope="session")
+def search_keywords_data():
+  with open(SEARCH_KEYWORDS_DATA_PATH, encoding="utf-8") as f:
+    return json.load(f)
+
+
+@pytest.fixture
+def valid_search_keyword(search_keywords_data):
+  return search_keywords_data["valid_keywords"][0]
+
+
+@pytest.fixture
+def nonexistent_search_keyword(search_keywords_data):
+  return search_keywords_data["invalid_keywords"][0]
+
+
+@pytest.fixture
+def case_insensitive_keywords(search_keywords_data):
+  return search_keywords_data["case_insensitive_check"]
 
 
 @pytest.hookimpl(hookwrapper=True)

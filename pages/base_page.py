@@ -35,6 +35,12 @@ class BasePage:
   def get_page_title(self) -> str:
     return self.driver.title
 
+  def is_element_displayed(self, locator: Locator) -> bool:
+    try:
+      return self.find_element(locator).is_displayed()
+    except NoSuchElementException:
+      return False
+
   def find_element_visible(self, locator: Locator, timeout: Optional[int] = None) -> WebElement:
     wait = WebDriverWait(self.driver, timeout or DEFAULT_TIMEOUT)
     try:
