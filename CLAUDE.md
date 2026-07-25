@@ -130,9 +130,52 @@ class HomePage(BasePage):
 
 ---
 
-## 6. Locator 작성 원칙
+## 6. Playwright MCP 기반 페이지 탐색 규칙
 
-### 6.1 Locator 선택 우선순위
+### 6.1 사용 목적
+- Playwright MCP는 Selenium 테스트 코드에 사용할 실제 페이지 구조와 Locator 후보를 조사하고 검증하기 위한 **개발 보조 도구**로 사용합니다.
+- 프로덕션 테스트 실행 도구는 Selenium WebDriver이며, Playwright MCP를 Selenium 코드 대신 사용하지 않습니다.
+
+### 6.2 기본 탐색 순서
+웹 UI 자동화 코드를 작성하기 전에 다음 순서로 실제 페이지를 확인합니다.
+
+1. 대상 기능 PRD와 시나리오를 확인합니다.
+2. Playwright MCP로 대상 페이지에 접근합니다.
+3. `browser_snapshot`으로 페이지 구조와 대상 요소를 먼저 확인합니다.
+4. snapshot만으로 정보가 부족하면 `browser_evaluate`로 DOM 속성을 확인합니다.
+5. 확인한 정보를 기반으로 Selenium Locator를 작성합니다.
+6. 작성할 Locator가 실제 대상 요소를 고유하게 식별하는지 검증합니다.
+
+### 6.3 browser_evaluate 사용 기준
+`browser_evaluate`는 다음 정보가 snapshot에서 충분히 확인되지 않을 때만 사용합니다.
+- id
+- name
+- role
+- aria-label
+- placeholder
+- data-testid 등 data-* 속성
+- 대상 요소의 텍스트
+- 상위·하위 DOM 관계
+- 동일 조건에 일치하는 요소 개수
+
+**금지**: 페이지 상태를 변경하거나 서비스 데이터를 조작하기 위한 JavaScript 실행에는 사용하지 않습니다.
+
+### 6.4 사용자 확인 요청 기준
+다음 사유로 Playwright MCP를 이용한 직접 확인이 불가능한 경우에만 사용자에게 스크린샷이나 추가 정보를 요청합니다.
+- 로그인 계정이나 권한이 없음
+- OTP, 2FA 또는 CAPTCHA가 필요함
+- 사내망이나 특정 네트워크 환경이 필요함
+- 사용자별 데이터가 있어야 재현 가능함
+- MCP 브라우저와 실제 테스트 환경이 다름
+- 대상 요소나 요구사항이 여러 의미로 해석될 수 있음
+
+단순히 Locator가 제공되지 않았다는 이유만으로 작업을 중단하지 않습니다.
+
+---
+
+## 7. Locator 작성 원칙
+
+### 7.1 Locator 선택 우선순위
 Locator의 안정성 기준에 따라 **아래 순서대로 선택**합니다:
 
 1. **id 속성** (가장 안정적)
@@ -160,7 +203,7 @@ Locator의 안정성 기준에 따라 **아래 순서대로 선택**합니다:
    ROW = (By.XPATH, "//tr[@data-id='123']/td[2]")
    ```
 
-### 6.2 금지 사항
+### 7.2 금지 사항
 
 **Full XPath 절대 금지**
 ```python
@@ -170,7 +213,7 @@ ELEMENT = (By.XPATH, "/html/body/div[1]/div[2]/section/div[3]/button")
 
 **이유**: DOM 구조 변경 시 즉시 깨지므로 유지보수 불가능합니다.
 
-### 6.3 Locator 정의 위치
+### 7.3 Locator 정의 위치
 - 모든 Locator는 Page 클래스의 **상단에 상수 또는 클래스 변수로 정의**합니다.
 - 메서드 내에 locator를 하드코딩하지 않습니다.
 
@@ -184,9 +227,9 @@ class LoginPage(BasePage):
 
 ---
 
-## 7. Wait 처리 규칙
+## 8. Wait 처리 규칙
 
-### 7.1 time.sleep() 절대 금지
+### 8.1 time.sleep() 절대 금지
 ```python
 # ❌ 금지 - 불안정하고 비효율적
 time.sleep(5)
@@ -198,7 +241,7 @@ driver.find_element(By.ID, "element")
 - 실제 요소 로드 시간과 무관하게 대기
 - 테스트 불안정성 증가
 
-### 7.2 Explicit Wait 기본 사용
+### 8.2 Explicit Wait 기본 사용
 Selenium의 `WebDriverWait` + `expected_conditions`를 사용하여 명시적 대기 구현합니다.
 
 ```python
@@ -210,7 +253,7 @@ wait = WebDriverWait(driver, 10)
 element = wait.until(EC.presence_of_element_located((By.ID, "element")))
 ```
 
-### 7.3 BasePage에 공통 Wait 메서드 제공 (예정)
+### 8.3 BasePage에 공통 Wait 메서드 제공 (예정)
 BasePage에서 반복되는 wait 로직을 래핑 메서드로 제공할 예정입니다.
 예시 (구현 시 실제 메서드명 확정):
 - `find_element_visible()`: 요소가 보이기를 대기 후 반환
@@ -222,13 +265,13 @@ BasePage에서 반복되는 wait 로직을 래핑 메서드로 제공할 예정�
 
 ---
 
-## 8. Assertion 작성 규칙
+## 9. Assertion 작성 규칙
 
-### 8.1 Assertion은 Test Layer에서만 수행
+### 9.1 Assertion은 Test Layer에서만 수행
 - **Page Layer**: 값을 조회하여 반환만 합니다.
 - **Test Layer**: Page에서 받은 값과 예상값을 비교하여 검증합니다.
 
-### 8.2 pytest assert 사용
+### 9.2 pytest assert 사용
 ```python
 # ✅ 올바른 방식 (Test Layer)
 def test_login_success(driver):
@@ -241,7 +284,7 @@ def test_login_success(driver):
     assert username == "John Doe", f"Expected 'John Doe' but got '{username}'"
 ```
 
-### 8.3 실패 메시지에 기대값/실제값 포함
+### 9.3 실패 메시지에 기대값/실제값 포함
 ```python
 # ✅ 명확한 메시지
 assert result == expected, f"Expected {expected}, but got {result}"
@@ -252,9 +295,9 @@ assert result == expected
 
 ---
 
-## 9. pytest Fixture 작성 규칙
+## 10. pytest Fixture 작성 규칙
 
-### 9.1 WebDriver Fixture는 conftest.py에 배치 (예정)
+### 10.1 WebDriver Fixture는 conftest.py에 배치 (예정)
 `conftest.py`에 WebDriver 생성/종료를 담당하는 fixture를 정의합니다.
 
 ```python
@@ -268,11 +311,11 @@ def driver():
     driver.quit()
 ```
 
-### 9.2 Scope 기본값: function
+### 10.2 Scope 기본값: function
 - **기본 scope**: `function` (각 테스트마다 새로운 드라이버 생성)
 - **목표**: 테스트 간 상태 격리로 서로 영향을 주지 않도록 보장
 
-### 9.3 Fixture는 yield 패턴으로 리소스 정리 보장
+### 10.3 Fixture는 yield 패턴으로 리소스 정리 보장
 ```python
 # ✅ 올바른 방식
 @pytest.fixture
@@ -282,7 +325,7 @@ def driver():
     driver.quit()  # 항상 정리됨
 ```
 
-### 9.4 Page Object Fixture (선택사항)
+### 10.4 Page Object Fixture (선택사항)
 자주 사용하는 Page 객체도 fixture로 작성하여 테스트에서 재사용합니다.
 
 ```python
@@ -294,13 +337,13 @@ def home_page(driver):
 
 ---
 
-## 10. 테스트 독립성 규칙
+## 11. 테스트 독립성 규칙
 
-### 10.1 테스트 간 실행 순서 의존 금지
+### 11.1 테스트 간 실행 순서 의존 금지
 - 각 테스트는 **단독 실행 가능**해야 합니다.
 - 한 테스트의 결과가 다른 테스트에 영향을 주지 않아야 합니다.
 
-### 10.2 각 테스트는 독립적 셋업/테어다운
+### 11.2 각 테스트는 독립적 셋업/테어다운
 ```python
 # ❌ 금지 - 순서 의존성
 def test_login():
@@ -325,22 +368,22 @@ def test_dashboard_widgets(driver):
     assert dashboard_page.verify_widgets()
 ```
 
-### 10.3 테스트가 생성한 데이터는 해당 테스트 내에서 정리
+### 11.3 테스트가 생성한 데이터는 해당 테스트 내에서 정리
 가능한 경우, fixture의 yield 후(teardown) 생성한 데이터를 삭제합니다.
 (API 호출로 생성한 테스트 사용자 등)
 
 ---
 
-## 11. 테스트 데이터 관리 규칙
+## 12. 테스트 데이터 관리 규칙
 
-### 11.1 계정 정보/테스트 데이터는 코드에 하드코딩 금지
+### 12.1 계정 정보/테스트 데이터는 코드에 하드코딩 금지
 ```python
 # ❌ 금지
 def test_login():
     login_page.login("testuser@example.com", "password123")
 ```
 
-### 11.2 테스트 데이터는 외부 소스에서 관리 (예정)
+### 12.2 테스트 데이터는 외부 소스에서 관리 (예정)
 - **방식 1**: JSON/YAML 파일 (`test_data/` 디렉터리)
   ```python
   # test_data/accounts.json
@@ -368,9 +411,9 @@ def test_login():
 
 ---
 
-## 12. 환경변수 및 민감정보 관리 규칙
+## 13. 환경변수 및 민감정보 관리 규칙
 
-### 12.1 민감정보는 환경변수로 관리
+### 13.1 민감정보는 환경변수로 관리
 비밀번호, API 키, 토큰 등 민감한 정보는 **절대 코드에 작성하지 않습니다.**
 
 ```python
@@ -381,7 +424,7 @@ password = "mySecurePassword123"
 password = os.getenv("TEST_PASSWORD")
 ```
 
-### 12.2 .env 파일 사용 (미생성)
+### 13.2 .env 파일 사용 (미생성)
 `python-dotenv` 라이브러리를 사용하여 `.env` 파일에서 환경변수 로드:
 ```python
 from dotenv import load_dotenv
@@ -389,22 +432,22 @@ load_dotenv()
 password = os.getenv("TEST_PASSWORD")
 ```
 
-### 12.3 .env는 git 미추적 대상
+### 13.3 .env는 git 미추적 대상
 `.gitignore`에 `.env` 추가하여 실수로 인한 민감정보 누출 방지:
 ```
 .env
 ```
 
-### 12.4 코드/로그/리포트에 민감정보 노출 금지
+### 13.4 코드/로그/리포트에 민감정보 노출 금지
 - 로그 출력 시 비밀번호는 마스킹 처리
 - 실패 시 스크린샷에 민감정보가 보이지 않도록 주의
 - 테스트 리포트에 계정 정보 노출 금지
 
 ---
 
-## 13. Logging 규칙
+## 14. Logging 규칙
 
-### 13.1 Python 표준 logging 모듈 사용
+### 14.1 Python 표준 logging 모듈 사용
 ```python
 import logging
 
@@ -417,45 +460,45 @@ print("로그인 시도")
 logger.info("로그인 시도")
 ```
 
-### 13.2 로그 레벨 기준
+### 14.2 로그 레벨 기준
 - **DEBUG**: 상세한 진단 정보 (locator 찾기, 요소 상태 등)
 - **INFO**: 주요 액션 (로그인, 페이지 이동, 버튼 클릭 등)
 - **WARNING**: 경고 (재시도, 느린 응답 등)
 - **ERROR**: 오류 (예외 발생, 요소를 찾지 못함 등)
 - **CRITICAL**: 심각한 오류 (드라이버 크래시 등)
 
-### 13.3 로그 포맷 및 저장 위치 (예정)
+### 14.3 로그 포맷 및 저장 위치 (예정)
 - 로그 포맷: `[시간] [레벨] [모듈명] [메시지]`
 - 저장 경로: `logs/` 디렉터리 (미생성)
 - 로테이션: 일일 또는 크기 기반 로테이션 적용 (구현 시 결정)
 
 ---
 
-## 14. 테스트 실패 시 Screenshot 저장 규칙
+## 15. 테스트 실패 시 Screenshot 저장 규칙
 
-### 14.1 자동 스크린샷 캡처 구조 (예정)
+### 15.1 자동 스크린샷 캡처 구조 (예정)
 pytest hook을 사용하여 **테스트 실패 시 자동으로 스크린샷을 캡처**하도록 구현할 예정입니다.
 - Hook 사용: `pytest_runtest_makereport`
 - 실패(FAILED) 상태일 때만 캡처
 
-### 14.2 파일명 규칙
+### 15.2 파일명 규칙
 ```
 screenshots/test_login_failure_2024-07-20_14-30-45.png
 ```
 - 형식: `{테스트_함수명}_{상태}_{타임스탬프}.png`
 - 타임스탬프: `YYYY-MM-DD_HH-MM-SS`
 
-### 14.3 저장 경로
+### 15.3 저장 경로
 모든 스크린샷은 `screenshots/` 디렉터리에 저장합니다. (git 미추적)
 
-### 14.4 민감정보 고려
+### 15.4 민감정보 고려
 스크린샷에 비밀번호, 개인정보 등 민감정보가 노출되지 않도록 주의합니다.
 
 ---
 
-## 15. 예외 처리 규칙
+## 16. 예외 처리 규칙
 
-### 15.1 불필요한 광범위 예외 처리 지양
+### 16.1 불필요한 광범위 예외 처리 지양
 ```python
 # ❌ 금지 - 너무 광범위
 try:
@@ -464,7 +507,7 @@ except Exception:
     logger.error("로그인 실패")
 ```
 
-### 15.2 구체적 예외만 처리
+### 16.2 구체적 예외만 처리
 Selenium에서 발생하는 특정 예외를 명시적으로 처리합니다.
 
 ```python
@@ -479,7 +522,7 @@ except NoSuchElementException:
     logger.error("요소를 찾을 수 없음")
 ```
 
-### 15.3 Selenium 관련 예외는 로깅 필수
+### 16.3 Selenium 관련 예외는 로깅 필수
 예외 발생 시 로그를 남겨 나중에 디버깅할 수 있도록 합니다.
 
 ```python
@@ -489,12 +532,12 @@ except TimeoutException as e:
 
 ---
 
-## 16. Python Coding Convention
+## 17. Python Coding Convention
 
-### 16.1 PEP8 준수
+### 17.1 PEP8 준수
 [Python Enhancement Proposal 8 (PEP8)](https://www.python.org/dev/peps/pep-0008/) 스타일 가이드를 준수합니다.
 
-### 16.2 들여쓰기: 2칸
+### 17.2 들여쓰기: 2칸
 프로젝트 글로벌 설정에 따라 **2칸 들여쓰기**를 사용합니다.
 
 ```python
@@ -504,7 +547,7 @@ class LoginPage(BasePage):
     self.find_element(self.EMAIL_INPUT).send_keys(email)
 ```
 
-### 16.3 타입힌트 권장
+### 17.3 타입힌트 권장
 메서드 파라미터와 반환값에 타입힌트를 추가하여 코드 가독성을 높입니다.
 
 ```python
@@ -516,7 +559,7 @@ def get_user_count(self) -> int:
     return len(self.find_elements(...))
 ```
 
-### 16.4 최대 라인 길이: 100자
+### 17.4 최대 라인 길이: 100자
 한 줄을 100자 이내로 유지하여 가독성을 확보합니다.
 
 ```python
@@ -531,9 +574,9 @@ element = self.find_element(
 
 ---
 
-## 17. 파일·클래스·메서드 Naming Convention
+## 18. 파일·클래스·메서드 Naming Convention
 
-### 17.1 파일명: snake_case
+### 18.1 파일명: snake_case
 ```
 pages/
 ├── home_page.py
@@ -546,7 +589,7 @@ tests/
 └── test_checkout.py
 ```
 
-### 17.2 클래스명: PascalCase
+### 18.2 클래스명: PascalCase
 ```python
 class HomePage(BasePage):
     ...
@@ -555,7 +598,7 @@ class LoginPage(BasePage):
     ...
 ```
 
-### 17.3 Page 객체 클래스명 접미사: Page
+### 18.3 Page 객체 클래스명 접미사: Page
 모든 Page 객체 클래스는 `Page`로 끝납니다.
 ```python
 # ✅ 올바른 방식
@@ -573,7 +616,7 @@ class LoginScreen(BasePage):
     ...
 ```
 
-### 17.4 메서드명: snake_case (동사로 시작)
+### 18.4 메서드명: snake_case (동사로 시작)
 ```python
 class LoginPage(BasePage):
     def enter_email(self, email: str) -> None:
@@ -589,7 +632,7 @@ class LoginPage(BasePage):
         ...
 ```
 
-### 17.5 테스트 함수명: test_* 접두사
+### 18.5 테스트 함수명: test_* 접두사
 ```python
 def test_login_with_valid_credentials():
     ...
@@ -601,7 +644,7 @@ def test_product_search_by_name():
     ...
 ```
 
-### 17.6 변수/함수명: snake_case (영어 사용)
+### 18.6 변수/함수명: snake_case (영어 사용)
 프로젝트 글로벌 설정에 따라 코드에서는 영어를 사용합니다.
 ```python
 search_keyword = "laptop"
@@ -611,9 +654,9 @@ is_logged_in = True
 
 ---
 
-## 18. 공통 코드와 Utility 분리 기준
+## 19. 공통 코드와 Utility 분리 기준
 
-### 18.1 공통 화면 조작은 BasePage에 작성
+### 19.1 공통 화면 조작은 BasePage에 작성
 ```python
 # base_page.py
 class BasePage:
@@ -634,7 +677,7 @@ class BasePage:
         return self.driver.title
 ```
 
-### 18.2 화면과 무관한 순수 로직은 utils에 분리
+### 19.2 화면과 무관한 순수 로직은 utils에 분리
 ```python
 # utils/helpers.py
 def generate_random_email() -> str:
@@ -650,20 +693,20 @@ def format_date(date_obj, format_string: str) -> str:
     return date_obj.strftime(format_string)
 ```
 
-### 18.3 분리 기준
+### 19.3 분리 기준
 - **2회 이상 반복**: 중복 코드는 공통 메서드로 분리
 - **BasePage**: 모든 Page에서 필요한 화면 조작 (클릭, 입력, 요소 찾기 등)
 - **utils**: 화면과 무관한 데이터 처리, 문자열 변환, 헬퍼 함수
 
 ---
 
-## 19. 코드 생성 후 실행 및 검증 규칙
+## 20. 코드 생성 후 실행 및 검증 규칙
 
-### 19.1 코드 생성 후 반드시 테스트 실행
+### 20.1 코드 생성 후 반드시 테스트 실행
 코드 작성을 완료한 후 **반드시 관련 테스트를 실행**하여 동작을 검증합니다.
 테스트 실행 없이 "완료"로 간주하지 않습니다.
 
-### 19.2 pytest 실행 방법 (예정)
+### 20.2 pytest 실행 방법 (예정)
 ```bash
 # 특정 테스트 파일 실행
 pytest tests/test_login.py
@@ -681,10 +724,10 @@ pytest -v tests/
 pytest tests/ --html=reports/report.html
 ```
 
-### 19.3 pytest-html 리포트 확인
+### 20.3 pytest-html 리포트 확인
 테스트 실행 후 `reports/` 디렉터리에 생성된 HTML 리포트를 브라우저에서 열어 시각적으로 결과를 확인합니다.
 
-### 19.4 검증 체크리스트
+### 20.4 검증 체크리스트
 - ✅ 테스트 함수가 PASSED 상태인가?
 - ✅ 로그에 예상된 INFO/ERROR 메시지가 있는가?
 - ✅ 실패한 테스트는 스크린샷이 저장되었는가?
@@ -692,36 +735,36 @@ pytest tests/ --html=reports/report.html
 
 ---
 
-## 20. Claude 자체 리뷰 체크리스트
+## 21. Claude 자체 리뷰 체크리스트
 
 코드 생성 후 Claude가 다음 항목을 **자체 검토**합니다. 이 체크리스트를 통과하지 않으면 코드 수정을 진행합니다.
 
-### 20.1 Wait 및 Sleep 관련
+### 21.1 Wait 및 Sleep 관련
 - [ ] `time.sleep()`이 코드에 포함되지 않았는가?
 - [ ] 모든 요소 조작에 적절한 WebDriverWait가 사용되었는가?
 - [ ] Implicit Wait 대신 Explicit Wait가 사용되었는가?
 
-### 20.2 Locator 관련
+### 21.2 Locator 관련
 - [ ] Full XPath가 사용되지 않았는가?
 - [ ] 모든 locator가 Page 클래스 상단에 상수/변수로 정의되었는가?
 - [ ] locator 우선순위 규칙(id > data-* > name > css > xpath)을 따랐는가?
 
-### 20.3 POM 구조
+### 21.3 POM 구조
 - [ ] Page Layer에 assertion이 없는가? (assertion은 Test에서만)
 - [ ] Page 메서드가 값을 반환하거나 화면을 조작만 하는가?
 - [ ] 모든 Page 클래스가 BasePage를 상속하는가?
 
-### 20.4 테스트 독립성
+### 21.4 테스트 독립성
 - [ ] 각 테스트가 단독 실행 가능한가?
 - [ ] 테스트 간 순서 의존성이 없는가?
 - [ ] 테스트가 생성한 데이터를 정리하는가?
 
-### 20.5 민감정보 관리
+### 21.5 민감정보 관리
 - [ ] 계정 정보/비밀번호가 코드에 하드코딩되지 않았는가?
 - [ ] 민감정보가 환경변수나 외부 파일로 관리되는가?
 - [ ] 로그/리포트에 민감정보가 노출되지 않는가?
 
-### 20.6 코딩 컨벤션
+### 21.6 코딩 컨벤션
 - [ ] 파일명이 snake_case인가?
 - [ ] 클래스명이 PascalCase이고 Page 객체는 `~Page` 접미사인가?
 - [ ] 메서드명이 snake_case이고 동사로 시작하는가?
@@ -729,21 +772,21 @@ pytest tests/ --html=reports/report.html
 - [ ] 2칸 들여쓰기를 사용했는가?
 - [ ] 라인 길이가 100자 이내인가?
 
-### 20.7 데이터 및 로깅
+### 21.7 데이터 및 로깅
 - [ ] 테스트 데이터가 외부 소스에서 로드되는가?
 - [ ] `print()` 대신 `logging` 모듈을 사용하는가?
 - [ ] 예외는 광범위하게 처리하지 않고 구체적으로 처리하는가?
 
-### 20.8 테스트 실행 확인
+### 21.8 테스트 실행 확인
 - [ ] 코드 작성 후 pytest를 실행했는가?
 - [ ] 테스트 결과가 PASSED/FAILED/ERROR 상태인가?
 - [ ] HTML 리포트가 생성되고 확인되었는가?
 
 ---
 
-## 21. 참고 사항
+## 22. 참고 사항
 
-### 21.1 추후 작업
+### 22.1 추후 작업
 다음 항목들은 아직 생성되지 않았으며, 실제 개발이 시작될 때 작성됩니다:
 - 디렉터리 구조 생성
 - `conftest.py` 작성 (pytest fixture)
@@ -754,7 +797,7 @@ pytest tests/ --html=reports/report.html
 - GitHub Actions 워크플로우 파일 (`.github/workflows/*.yml`)
 - 기능별 명세 문서
 
-### 21.2 문서 유지보수
+### 22.2 문서 유지보수
 - 이 문서는 프로젝트 진행 중 새로운 규칙이 발견되면 업데이트합니다.
 - 특정 기능의 요구사항이 결정되면 별도의 기능 명세 문서를 작성합니다.
 - 모호한 부분이 있으면 Claude에 질문하여 명확히 합니다.

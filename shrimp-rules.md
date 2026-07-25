@@ -44,27 +44,52 @@
 
 ## 4. 코드 작업 착수 전 확인 규칙
 
-- Page Object(`pages/*.py`) 또는 테스트(`tests/test_*.py`) 구현을 시작하기 전, `docs/ROADMAP.md`의 해당 기능 섹션에 명시된 **블로커** 항목(예: 실제 Locator 미공유, 테스트 계정 미생성)이 해소되었는지 확인한다. 해소되지 않았다면 사용자에게 먼저 확인을 요청하고, 추측으로 Locator나 계정 정보를 만들어내지 않는다.
+- Page Object(`pages/*.py`) 또는 테스트(`tests/test_*.py`) 구현을 시작하기 전, `docs/ROADMAP.md`의 해당 기능 섹션에 명시된 **블로커** 항목이 해소되었는지 확인한다. 단, **실제 Locator 미공유 자체는 더 이상 즉시 사용자 확인이 필요한 블로커로 취급하지 않는다** — §5(Playwright MCP 기반 Locator 조사 절차)에 따라 먼저 직접 조사한다. 테스트 계정의 실제 이메일/비밀번호/이름 값처럼 Playwright MCP로 확인할 수 없는 블로커(예: 사전 생성이 필요한 계정 정보)는 기존과 동일하게 해소 여부를 확인하고, 해소되지 않았다면 사용자에게 먼저 확인을 요청한다. 어떤 경우든 추측으로 계정 정보를 만들어내지 않는다.
 - 코드 작업 시작 전 `CLAUDE.md`를 반드시 재확인한다 (디렉터리 구조, Locator 우선순위, Wait 규칙, Page/Test 계층 책임 분리, 2칸 들여쓰기 등은 `CLAUDE.md`가 유일한 기준이며 이 문서에서 반복하지 않는다).
 - Phase 순서를 건너뛰지 않는다: `docs/ROADMAP.md`는 Phase 0(기반 설정) → Phase 1(인증/탐색) → Phase 2(장바구니) → Phase 3(안정화) 순서를 전제로 Task 간 선행 조건을 명시하고 있다. 예를 들어 `pages/base_page.py`(Phase 0)가 없는 상태에서 `pages/login_page.py`(Phase 1)부터 구현하지 않는다.
 
 ---
 
-## 5. 모호한 요청 처리 기준
+## 5. Playwright MCP 기반 Locator 조사 절차
+
+Playwright MCP는 Selenium 자동화 코드를 대체하는 실행 도구가 아니라 실제 페이지 구조와 Locator 후보를 조사·검증하는 보조 도구다 (`CLAUDE.md` §6.1). 구체적인 탐색 방법(`browser_snapshot`/`browser_evaluate` 사용 기준, DOM 속성 확인 항목)은 `CLAUDE.md` §6에 이미 정의되어 있으므로 이 문서에서 재작성하지 않는다. 이 섹션은 그 절차를 AI Agent의 Task 실행 흐름 안에서 **언제** 적용하는지만 규정한다.
+
+Page Object 또는 테스트 코드 작성 착수 시 실제 Locator 정보가 아직 없더라도, **곧바로 사용자에게 스크린샷을 요청하지 않는다.** 대신 다음 순서를 따른다:
+
+1. `docs/ROADMAP.md`에서 해당 Task의 선행 조건(Phase 순서, 의존 기능)이 충족되었는지 확인한다.
+2. 관련 기능 PRD(`docs/prd/features/{feature}.md`)에서 대상 화면과 시나리오를 확인한다.
+3. Playwright MCP로 실제 대상 페이지에 접근한다.
+4. `browser_snapshot`으로 페이지 구조와 대상 요소를 먼저 확인한다.
+5. snapshot만으로 정보가 부족한 경우에만 `browser_evaluate`로 DOM 속성을 확인한다 (`CLAUDE.md` §6.3 기준).
+6. `CLAUDE.md` §7(Locator 작성 원칙)의 우선순위에 따라 Selenium Locator를 선정한다.
+7. 선정한 Locator가 대상 요소를 고유하게 식별하는지, 실제 클릭/조회 시 의도대로 동작하는지 Playwright MCP로 검증한다.
+8. 검증이 끝난 뒤에만 Page Object/테스트 코드를 작성하고, `CLAUDE.md` §20에 따라 pytest를 실행해 결과를 확인한다.
+
+Playwright MCP로 직접 확인이 불가능한 경우에만 사용자에게 스크린샷이나 추가 정보를 요청한다. 해당 사유는 `CLAUDE.md` §6.4의 6가지 사유(로그인 계정/권한 없음, OTP·2FA·CAPTCHA 필요, 사내망·특정 네트워크 필요, 사용자별 데이터 필요, MCP-실환경 불일치, 다의적 해석)를 그대로 따르며, 이 프로젝트에서는 다음 사유를 추가한다:
+- 삭제, 결제, 제출 등 **되돌리기 어려운 동작**을 실행해야만 확인 가능한 화면/상태인 경우. 이런 동작은 Playwright MCP로도 임의로 실행하지 않고 먼저 사용자에게 확인한다.
+
+---
+
+## 6. 모호한 요청 처리 기준
 
 다음 정보가 없는 상태로 확정적인 결정이 필요한 경우, 임의로 결정하지 말고 사용자에게 질문한다:
-- 자동화 대상 사이트의 실제 UI 요소(id/name/data-*/CSS selector) — 추측으로 Locator를 작성하지 않는다.
 - 테스트 계정의 실제 이메일/비밀번호/이름 값.
 - PRD에 "확인 필요"로 표시된 항목의 실제 값(예: 세션 타임아웃 시간).
+- 그 밖에 §5에 명시된 사유(로그인 권한 없음, OTP/2FA/CAPTCHA, 사내망 환경, 사용자별 데이터, 되돌리기 어려운 동작 등)로 Playwright MCP를 통한 직접 확인이 불가능한 경우.
+
+**자동화 대상 사이트의 실제 UI 요소(id/name/data-*/CSS selector)는 더 이상 이 목록에 해당하지 않는다.** Locator 정보가 없다는 이유만으로 즉시 질문하지 않고, §5의 절차에 따라 Playwright MCP로 먼저 조사한다. 추측으로 Locator를 작성하지 않는다는 원칙은 그대로 유지된다.
 
 위 항목이 없어도 진행 가능한 문서 작업(PRD 초안, 로드맵 구조화 등)은 "확인 필요"로 표시한 채 진행하되, **코드에 실제 값처럼 하드코딩하지 않는다.**
 
 ---
 
-## 6. 금지 행위 요약
+## 7. 금지 행위 요약
 
 - 메인 에이전트가 `docs/prd/project-prd.md`, `docs/prd/features/*.md`, `docs/ROADMAP.md`를 직접 수정하는 행위 (반드시 해당 서브에이전트 경유).
 - `automation-prd-writer`, `roadmap-writer`에게 Selenium/pytest 코드, Page Object, conftest, requirements.txt 생성을 요청하는 행위 (두 서브에이전트 모두 Read/Write/Edit 권한만 있고 코드 생성은 역할 범위 밖).
 - `docs/ROADMAP.md`의 기존 체크(✅) 표시를 실제 코드/테스트 존재 여부 확인 없이 임의로 변경하는 행위.
 - PRD 문서 간(project-prd.md ↔ features/*.md) 또는 PRD-ROADMAP 간 불일치를 발견하고도 사용자 보고 없이 한쪽을 임의로 맞춰 고치는 행위.
-- 실제 사이트에서 확인되지 않은 Locator, 오류 메시지, URL을 확인된 사실처럼 PRD나 코드에 작성하는 행위.
+- 실제 사이트에서 확인되지 않은 Locator, 오류 메시지, URL을 확인된 사실처럼 PRD나 코드에 작성하는 행위 (Playwright MCP로 실제 확인한 Locator와 아직 확인되지 않은 추측 Locator는 반드시 구분하여 기록한다).
+- Playwright MCP로 직접 확인 가능한 내용을 확인하지 않고 Locator 미제공을 이유로 곧바로 사용자에게 스크린샷이나 추가 정보를 요청하는 행위 (§5 위반).
+- `browser_evaluate`로 페이지 상태나 서비스 데이터를 변경하는 JavaScript(폼 제출, 삭제, 결제, 데이터 수정 등)를 실행하는 행위.
+- 동적으로 생성되는 class명, 과도하게 긴 CSS Selector, 절대(Full) XPath를 충분한 검토 없이 Locator로 채택하는 행위 (Locator 우선순위는 `CLAUDE.md` §7 참조).
