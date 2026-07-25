@@ -1,8 +1,8 @@
 # 로그인 (Login) 기능 상세 PRD
 
 **작성 일자**: 2026-07-20  
-**최종 수정일**: 2026-07-22 ("Logged in as {username}"의 표시 형식이 회원가입 시 "Name" 필드 입력값과 일치함을 확인하여 반영)  
-**버전**: 1.4  
+**최종 수정일**: 2026-07-25 (사용자 요청: 로그인 테스트가 회원가입 시 생성한 계정을 재사용하도록 signup.md와 정합화)  
+**버전**: 1.5  
 **상태**: 초안 (로그인 성공/실패 핵심 흐름 중심으로 범위 확정. Locator는 Page Object 구현 착수 시 사용자가 실시간으로 공유할 예정)
 
 ---
@@ -89,6 +89,7 @@
 ### 테스트 데이터 준비
 - 로그인 시 사용할 유효한 계정 정보 (이메일, 비밀번호)
 - 로그인 실패 테스트용 무효한 계정 정보
+- **(v1.5 갱신)** 로그인 전용으로 별도 생성한 고정 계정을 사용하지 않으며, 회원가입(Signup) 자동화(`test_signup.py`)가 실제로 생성한 계정(`docs/prd/features/signup.md` 섹션 15)을 그대로 재사용함 (섹션 17, 18, 20 참고)
 
 ---
 
@@ -187,7 +188,7 @@
 **단계별 행동**:
 1. 사용자가 로그인 페이지(`https://automationexercise.com/login`) 접속
 2. "Email Address" 입력란에 등록된 이메일 주소 입력
-   - 예: `user@example.com`
+   - 예: `newuser001@example.com` (signup.md 섹션 15 "정상 회원가입 테스트" 계정과 동일, 섹션 17 참고)
 3. "Password" 입력란에 정확한 비밀번호 입력
    - 예: `password123`
 4. "Login" 버튼 클릭
@@ -327,10 +328,10 @@
 
 **전제조건**:
 - 로그인 페이지가 표시됨
-- 테스트 계정이 사전에 생성되어 있음 (이메일: `test@example.com`, 비밀번호: `password123`)
+- **(v1.5 갱신)** 로그인 전용 별도 계정이 아니라, 회원가입(Signup) 자동화(`test_signup.py`)가 실제로 생성한 계정을 재사용함: `docs/prd/features/signup.md` 섹션 15 "정상 회원가입 테스트" 계정(이메일: `newuser001@example.com`, 비밀번호: `password123`, 회원가입 시 Name: `John Doe`)이 이미 존재해야 함 (섹션 17, 18, 20 참고)
 
 **테스트 단계**:
-1. 로그인 페이지에서 "Email Address" 입력란에 `test@example.com` 입력
+1. 로그인 페이지에서 "Email Address" 입력란에 `newuser001@example.com` 입력
 2. "Password" 입력란에 `password123` 입력
 3. "Login" 버튼 클릭
 4. 메인 페이지로 리다이렉트 완료 확인 (로딩 표시 없음, 확인 완료)
@@ -343,7 +344,7 @@
 - ✅ 페이지 URL이 메인 페이지로 변경되었는가?
 - ✅ 메인 페이지 헤더 영역에 "Logout"이 노출되었는가?
 - ✅ 메인 페이지 헤더 영역에 "Delete Account" 링크가 노출되었는가? (확인 완료, 신규 검증 포인트)
-- ✅ (강화된 검증) 메인 페이지 헤더 영역에 "Logged in as {username}" 텍스트가 노출되며, 이 {username}이 로그인 시도에 사용한 계정(`test@example.com`)의 사용자명과 실제로 일치하는가? (섹션 16 참고)
+- ✅ (강화된 검증) 메인 페이지 헤더 영역에 "Logged in as {username}" 텍스트가 노출되며, 이 {username}이 로그인 시도에 사용한 계정(`newuser001@example.com`)의 사용자명(기대값: `John Doe`, signup.md 섹션 15 "정상 회원가입 테스트" 계정의 Name 값)과 실제로 일치하는가? (섹션 16 참고)
 
 **예상 실행 시간**: 약 3~5초
 
@@ -354,13 +355,13 @@
 **시나리오명**: 로그아웃한 사용자가 다시 로그인
 
 **전제조건**:
-- 사용자가 이미 로그인한 상태 (또는 회원가입 직후)
+- **(v1.5 갱신)** 회원가입(Signup) 자동화(`test_signup.py`)가 실제로 생성한 계정을 재사용함: `docs/prd/features/signup.md` 섹션 15 "재로그인 테스트" 계정(이메일: `newuser002@example.com`, 비밀번호: `securepass456`, 회원가입 시 Name: `Jane Doe`)으로 이미 로그인한 상태 (또는 해당 계정의 회원가입 직후)
 - "Logout" 버튼이 표시됨
 
 **테스트 단계**:
 1. "Logout" 버튼 클릭하여 로그아웃
 2. 로그아웃 후 로그인 페이지로 이동
-3. 동일한 이메일과 비밀번호로 재로그인 수행
+3. 동일한 이메일(`newuser002@example.com`)과 비밀번호(`securepass456`)로 재로그인 수행
 4. 로그인 성공 확인
 
 **기대 결과**:
@@ -370,7 +371,7 @@
 **검증 포인트**:
 - ✅ 로그아웃 후 "Signup / Login" 통합 링크가 표시되었는가?
 - ✅ 재로그인 후 메인 페이지 헤더에 "Logout"이 다시 노출되는가?
-- ✅ 재로그인 후 "Logged in as {username}" 텍스트가 다시 노출되며, 재로그인에 사용한 계정의 사용자명과 일치하는가? (섹션 16 참고)
+- ✅ 재로그인 후 "Logged in as {username}" 텍스트가 다시 노출되며, 재로그인에 사용한 계정(`newuser002@example.com`)의 사용자명(기대값: `Jane Doe`, signup.md 섹션 15 "재로그인 테스트" 계정의 Name 값)과 일치하는가? (섹션 16 참고)
 
 ---
 
@@ -382,10 +383,10 @@
 
 **전제조건**:
 - 로그인 페이지가 표시됨
-- 테스트 계정 존재: `test@example.com` / `password123`
+- **(v1.5 갱신)** 정상 로그인 테스트와 동일한 계정을 사용: `docs/prd/features/signup.md` 섹션 15 "정상 회원가입 테스트" 계정 존재(`newuser001@example.com` / `password123`). 이 계정에 의도적으로 틀린 비밀번호를 입력하는 방식으로 검증함
 
 **테스트 단계**:
-1. "Email Address" 입력란에 `test@example.com` 입력 (올바른 이메일)
+1. "Email Address" 입력란에 `newuser001@example.com` 입력 (올바른 이메일)
 2. "Password" 입력란에 `wrongpassword` 입력 (잘못된 비밀번호)
 3. "Login" 버튼 클릭
 
@@ -408,7 +409,7 @@
 
 **전제조건**:
 - 로그인 페이지가 표시됨
-- 테스트 계정과 다른 이메일 사용
+- **(v1.5 갱신)** signup.md의 계정과 무관하게, 실제로 가입된 적 없는 임의의 이메일을 사용함 (이 시나리오는 계정 존재 자체를 검증하는 것이 아니므로 signup.md의 특정 계정과 매핑할 필요가 없음)
 
 **테스트 단계**:
 1. "Email Address" 입력란에 `nonexistent@example.com` 입력 (존재하지 않는 이메일)
@@ -500,9 +501,10 @@
 
 ```python
 # 예시 (구현 시 실제 코드는 테스트 레이어에서 작성)
+# (v1.5 갱신) 계정 값은 signup.md 섹션 15 "정상 회원가입 테스트" 계정을 그대로 재사용
 
 # 성공 케이스
-login_page.enter_email("test@example.com")
+login_page.enter_email("newuser001@example.com")
 login_page.enter_password("password123")
 login_page.click_login_button()
 
@@ -511,10 +513,10 @@ home_page = HomePage(driver)
 assert home_page.is_logout_link_displayed() == True
 # "Logged in as {username}" 텍스트로 실제 로그인한 계정과 일치하는지 확인 (더 강력한 검증, 확인 완료)
 # {username}에는 회원가입 시 "Name" 필드에 입력한 값이 그대로 표시됨 (확인 완료, 섹션 7, 20 참고)
-assert home_page.get_logged_in_username() == "Test User"  # 예시 값: 해당 계정 회원가입 시 입력한 Name 값
+assert home_page.get_logged_in_username() == "John Doe"  # signup.md "정상 회원가입 테스트" 계정의 Name 값
 
-# 실패 케이스
-login_page.enter_email("test@example.com")
+# 실패 케이스 (동일 계정에 잘못된 비밀번호 입력)
+login_page.enter_email("newuser001@example.com")
 login_page.enter_password("wrongpassword")
 login_page.click_login_button()
 
@@ -528,21 +530,28 @@ assert "Your email or password is incorrect!" in login_page.get_error_message_te
 
 ### 테스트 계정 정보
 
-| 용도 | 이메일 | 비밀번호 | Name (회원가입 시 입력값) | 상태 | 비고 |
-|------|--------|---------|--------------------------|------|------|
-| **정상 로그인 테스트** | `test001@example.com` | `password123` | `Test User 001` | 활성 | 미리 생성된 계정 |
-| **재로그인 테스트** | `test002@example.com` | `securepass456` | `Test User 002` | 활성 | 미리 생성된 계정 |
-| **비정상 테스트용** | `invalid@example.com` | 임의 | - | 미존재 | 고의로 미생성 |
+**(v1.5 갱신, 사용자 요청)**: 로그인 테스트 전용으로 별도 생성한 고정 계정(`test001@example.com` 등)을 사용하는 대신, 회원가입 자동화(`test_signup.py`)가 실제로 생성하는 계정을 그대로 재사용하도록 갱신했습니다. 아래 계정 값의 진실의 원천(single source of truth)은 `docs/prd/features/signup.md` 섹션 15이며, 이 표는 로그인 테스트 관점에서 해당 데이터를 참조용으로 재기재한 것입니다. 두 문서의 값이 달라지는 경우 signup.md를 기준으로 이 표를 갱신해야 합니다.
 
-**확인 완료**: "Logged in as {username}" 텍스트 검증(섹션 16 강화된 검증 포인트)을 위해서는 각 테스트 계정에 대해 회원가입 시 사용한 "Name" 값을 그대로 `expected_username`으로 사용하면 됩니다. {username}에는 이메일이나 이메일의 로컬 파트가 아니라 회원가입 폼의 "Name" 필드 입력값이 그대로 표시되는 것으로 확인되었으므로(섹션 7, 20 참고), 위 표의 "Name (회원가입 시 입력값)" 컬럼 값을 각 테스트 계정의 `expected_username`으로 관리합니다.
+| 용도 | 이메일 | 비밀번호 | Name (=expected_username) | 출처 (signup.md 섹션 15) | 상태 | 비고 |
+|------|--------|---------|--------------------------|--------------------------|------|------|
+| **정상 로그인 테스트 (NOR-001)** | `newuser001@example.com` | `password123` | `John Doe` | "정상 회원가입 테스트" 계정 | 회원가입 자동화로 실제 생성됨 | 로그인 테스트는 이 계정을 그대로 재사용하며, 로그인 전용으로 별도 생성하지 않음 |
+| **재로그인 테스트 (NOR-002)** | `newuser002@example.com` | `securepass456` | `Jane Doe` | "재로그인 테스트" 계정 | 회원가입 자동화로 실제 생성됨 | 로그인 테스트는 이 계정을 그대로 재사용하며, 로그인 전용으로 별도 생성하지 않음 |
+| **비정상 테스트용 - 잘못된 비밀번호 (ABN-001)** | `newuser001@example.com` | `wrongpassword` (의도적으로 틀린 값) | - | "정상 회원가입 테스트" 계정과 동일 이메일 사용 | 정상 계정이 실제로 존재해야 함 | 별도 계정을 만들지 않고, 정상 로그인 테스트 계정에 틀린 비밀번호를 입력하는 방식으로 검증 |
+| **비정상 테스트용 - 존재하지 않는 이메일 (ABN-002)** | `nonexistent@example.com` (임의의 미등록 이메일) | 임의 | - | 해당 없음 | 미존재 | 계정 존재 자체를 검증하지 않는 시나리오이므로 signup.md 계정과 매핑할 필요 없이 임의의 미등록 이메일이면 충분함 (고의로 미생성) |
+
+**확인 완료**: "Logged in as {username}" 텍스트 검증(섹션 16 강화된 검증 포인트)을 위해서는 각 테스트 계정에 대해 signup.md 섹션 15에서 실제로 회원가입 시 사용한 "Name" 값을 그대로 `expected_username`으로 사용하면 됩니다. {username}에는 이메일이나 이메일의 로컬 파트가 아니라 회원가입 폼의 "Name" 필드 입력값이 그대로 표시되는 것으로 확인되었으므로(섹션 7, 20 참고), 위 표의 "Name (=expected_username)" 컬럼 값을 각 테스트 계정의 `expected_username`으로 관리합니다.
 
 ### 테스트 데이터 관리 방식
 
+**참고 (v1.5 갱신)**: 아래 값은 회원가입 자동화(signup.md의 `TEST_USER_EMAIL` 등 환경변수/데이터)에서 사용하는 값과 동일해야 합니다. 별도의 로그인 전용 계정 값을 새로 만들지 않습니다.
+
 **방식 1: 환경변수 (.env 파일)**
 ```
-TEST_EMAIL=test001@example.com
+TEST_EMAIL=newuser001@example.com
 TEST_PASSWORD=password123
-TEST_INVALID_EMAIL=invalid@example.com
+TEST_RELOGIN_EMAIL=newuser002@example.com
+TEST_RELOGIN_PASSWORD=securepass456
+TEST_INVALID_EMAIL=nonexistent@example.com
 TEST_INVALID_PASSWORD=wrongpassword
 ```
 
@@ -550,37 +559,50 @@ TEST_INVALID_PASSWORD=wrongpassword
 ```json
 {
   "valid_account": {
-    "email": "test001@example.com",
+    "email": "newuser001@example.com",
     "password": "password123",
-    "expected_username": "Test User 001"
+    "expected_username": "John Doe"
+  },
+  "relogin_account": {
+    "email": "newuser002@example.com",
+    "password": "securepass456",
+    "expected_username": "Jane Doe"
   },
   "invalid_password": {
-    "email": "test001@example.com",
+    "email": "newuser001@example.com",
     "password": "wrongpassword"
   },
   "nonexistent_email": {
-    "email": "invalid@example.com",
+    "email": "nonexistent@example.com",
     "password": "anypassword"
   }
 }
 ```
 
-**참고**: `expected_username`은 해당 계정으로 회원가입할 때 "Name" 필드에 입력한 값을 그대로 사용합니다(확인 완료).
+**참고**: `expected_username`은 해당 계정으로 회원가입할 때 "Name" 필드에 입력한 값을 그대로 사용합니다(확인 완료). `valid_account`, `relogin_account`의 값은 signup.md 섹션 15의 "정상 회원가입 테스트", "재로그인 테스트" 계정과 각각 동일해야 합니다.
 
 **방식 3: pytest Fixture (conftest.py)**
 ```python
 @pytest.fixture
 def valid_login_credentials():
     return {
-        "email": "test001@example.com",
+        "email": "newuser001@example.com",
         "password": "password123",
-        "expected_username": "Test User 001"  # 회원가입 시 Name 필드에 입력한 값
+        "expected_username": "John Doe"  # signup.md 섹션 15 "정상 회원가입 테스트" 계정의 Name 값
+    }
+
+@pytest.fixture
+def relogin_credentials():
+    return {
+        "email": "newuser002@example.com",
+        "password": "securepass456",
+        "expected_username": "Jane Doe"  # signup.md 섹션 15 "재로그인 테스트" 계정의 Name 값
     }
 
 @pytest.fixture
 def invalid_login_credentials():
     return {
-        "email": "test001@example.com",
+        "email": "newuser001@example.com",
         "password": "wrongpassword"
     }
 ```
@@ -595,7 +617,11 @@ def invalid_login_credentials():
 - Automation Exercise에서 동일 이메일로 중복 가입 불가 (확인 완료, signup.md 섹션 9 참고)
 - 이메일 인증 절차 불필요 (확인 완료)
 - 테스트 환경에서 사이트 접근 제약 없음 (확인 완료)
-- 테스트 계정 준비 방식: 사전 생성 (테스트 실행 전 미리 생성해둔 고정 계정 사용) (확정)
+- **테스트 계정 준비 방식 (v1.5 갱신, 사용자 요청)**: 로그인 테스트가 별도의 "로그인 전용 고정 계정"을 새로 만들어 사전 생성해두는 방식을 더 이상 사용하지 않습니다. 대신 회원가입(Signup) 자동화(`test_signup.py`)가 실제로 생성하는 계정(signup.md 섹션 15)을 그대로 재사용합니다. 다만 로그인 테스트 자체의 관점에서는 여전히 "이미 존재하는 것으로 취급되는 고정 계정을 사용"한다는 성격은 유지됩니다. 근거는 다음과 같습니다.
+  - Automation Exercise는 계정 삭제 기능이 없거나 삭제하지 않는 것이 사이트 정책으로 확인되어(signup.md 섹션 15 "데이터 보호 규칙" 참고), 회원가입 자동화로 한 번 생성된 계정은 테스트 종료 후에도 별도 정리 없이 실제 사이트에 영구적으로 남아 있습니다.
+  - 따라서 `newuser001@example.com`, `newuser002@example.com` 계정이 (과거 어느 시점에든) 회원가입 자동화를 통해 최초 1회 생성되고 나면, 그 이후에는 로그인 테스트 입장에서 이 계정들은 수동으로 미리 만들어 둔 고정 계정과 동일하게 "이미 존재하는 계정"으로 취급할 수 있습니다.
+  - **CLAUDE.md의 테스트 독립성 원칙과의 관계**: CLAUDE.md 10.1~10.2는 "각 테스트는 단독 실행 가능해야 하며, 한 테스트의 결과가 다른 테스트에 영향을 주지 않아야 한다"는 원칙(동일 실행 세션 내에서의 실행 순서 의존 금지)을 요구합니다. 이번 결정은 이 원칙과 충돌하지 않는 것으로 판단합니다. 계정의 존재 여부는 매 테스트 실행마다 새로 생성/소멸되는 휘발성 데이터가 아니라, 사이트에 영구적으로 남는 서버 측 상태이기 때문입니다. 즉, 로그인 테스트를 실행할 때마다 `test_signup.py`를 함께/먼저 실행해야만 로그인 테스트가 동작하는 것이 아니라, 계정이 (다른 시점에 실행된 회원가입 자동화에 의해) 이미 생성되어 있기만 하면 로그인 테스트는 그 자체로 단독 실행이 가능합니다. 따라서 로그인 테스트와 회원가입 테스트 사이에는 "같은 실행에서의 순서 의존성"이 아니라 "데이터가 최초 1회 존재해야 한다"는 사전 조건만 있으며, 이는 사전 생성 방식의 고정 계정을 사용할 때와 동일한 성격의 의존성입니다.
+  - **운영상 함의**: 이 계정들이 실제 사이트에 아직 한 번도 생성된 적이 없는 완전히 새로운 테스트 환경이라면, 로그인 테스트를 처음 실행하기 전에 `test_signup.py`를 최소 1회 실행하여 계정을 생성해 두어야 합니다(예: CI 파이프라인의 최초 셋업 단계 또는 수동 1회 실행). 그러나 계정이 이미 존재하는 이후의 모든 시점에는, 로그인 테스트 실행 시마다 회원가입 테스트를 함께 실행할 필요가 없습니다.
 
 ---
 
@@ -605,7 +631,7 @@ def invalid_login_credentials():
 
 | 기능 | 의존 관계 | 설명 |
 |------|---------|------|
-| **회원가입 (Signup)** | 선행 필수 | 로그인 전에 계정이 먼저 생성되어야 함. 특히 회원가입 시 "Name" 필드에 입력한 값이 로그인 성공 후 메인 페이지 헤더의 "Logged in as {username}" 텍스트로 그대로 노출되므로(확인 완료), 로그인 기능의 사용자명 검증(LOGIN-REQ-008, 섹션 16)은 회원가입 시 입력한 Name 값에 직접 의존함 |
+| **회원가입 (Signup)** | 선행 필수 + 테스트 데이터 직접 재사용 (v1.5 갱신) | 로그인 전에 계정이 먼저 생성되어야 함. 특히 회원가입 시 "Name" 필드에 입력한 값이 로그인 성공 후 메인 페이지 헤더의 "Logged in as {username}" 텍스트로 그대로 노출되므로(확인 완료), 로그인 기능의 사용자명 검증(LOGIN-REQ-008, 섹션 16)은 회원가입 시 입력한 Name 값에 직접 의존함. 나아가 로그인 테스트는 별도의 로그인 전용 계정을 만들지 않고, 회원가입 자동화(`test_signup.py`)가 실제로 생성하는 계정을 그대로 재사용함: NOR-001/ABN-001은 signup.md 섹션 15 "정상 회원가입 테스트" 계정(`newuser001@example.com` / `password123` / Name `John Doe`)에, NOR-002는 "재로그인 테스트" 계정(`newuser002@example.com` / `securepass456` / Name `Jane Doe`)에 각각 1:1로 대응함 (섹션 17, 20 참고) |
 | **홈 페이지 (Home)** | 진입 경로 | 홈 페이지의 "Signup / Login" 통합 링크를 통해 로그인 페이지 진입 (확인 완료, 스크린샷 근거) |
 
 ### 이 기능을 필요로 하는 다른 기능
@@ -850,7 +876,7 @@ def test_login_with_invalid_password(driver, valid_email):
 - ✅ Automation Exercise에서 동일 이메일로 중복 가입 불가 (확인 완료, signup.md 섹션 9 참고)
 - ✅ 이메일 인증 절차 불필요 (확인 완료)
 - ✅ 테스트 환경에서 사이트 접근 제약 없음 (확인 완료)
-- ✅ 테스트 계정 준비 방식: 사전 생성 (테스트 실행 전 미리 생성해둔 고정 계정 사용) (확정)
+- ✅ **테스트 계정 준비 방식 (v1.5 갱신)**: 로그인 전용 별도 고정 계정을 새로 만들지 않고, 회원가입 자동화(`test_signup.py`)가 실제로 생성한 계정(signup.md 섹션 15)을 그대로 재사용함. 계정은 사이트에 영구적으로 남으므로(계정 삭제 기능 없음), 로그인 테스트는 회원가입 테스트와 매번 함께 실행할 필요 없이 단독 실행이 가능함 (CLAUDE.md 테스트 독립성 원칙과 충돌하지 않음, 상세 근거는 섹션 17 참고) (확정)
 - ✅ **(신규, 스크린샷 근거)** 로그인되지 않은 상태의 헤더 네비게이션은 `Home | Products | Cart | Signup / Login | Test Cases | API Testing | Video Tutorials | Contact us` 순서로 구성되며, "Login"이 단독 노출되지 않고 "Signup / Login" 하나의 통합 링크로 노출됨
 - ✅ **(신규, 스크린샷 근거)** 로그인 상태의 헤더 네비게이션은 `Home | Products | Cart | Logout | Delete Account | Test Cases | API Testing | Video Tutorials | Contact us | Logged in as {username}` 순서로 구성되며, "Delete Account" 링크와 "Logged in as {username}" 텍스트가 추가로 노출됨
 - ✅ **(신규)** "Logged in as {username}"의 표시 형식: {username}에는 회원가입 시 "Name" 필드에 입력한 값이 그대로 표시됨 (이메일 주소나 이메일의 로컬 파트가 아님). 이에 따라 섹션 16의 강화된 검증 포인트(계정 일치 여부 검증)와 섹션 17의 `expected_username` 테스트 데이터가 구체적으로 확정됨
@@ -927,7 +953,7 @@ def test_login_with_invalid_password(driver, valid_email):
 ## 22. 다음 단계
 
 ### 즉시 작업 (이 PRD 이후)
-1. **테스트 계정 준비**: 사전 생성 방식으로 테스트용 이메일, 비밀번호, Name(=`expected_username`) 값을 생성/확인 (테스트 실행 중 동적 생성 방식은 사용하지 않음)
+1. **테스트 계정 준비 (v1.5 갱신)**: 로그인 전용 계정을 별도로 생성하지 않고, 회원가입 자동화(`test_signup.py`)를 통해 signup.md 섹션 15의 계정(`newuser001@example.com` / `newuser002@example.com` 등)이 실제 사이트에 최초 1회 생성되어 있는지 확인 (아직 생성된 적이 없다면 로그인 테스트 실행 전에 `test_signup.py`를 최소 1회 실행하여 계정을 생성해 둠, 섹션 17·20 참고)
 2. **Locator 공유 대기**: Page Object 구현 착수 시 사용자로부터 각 UI 요소("Email Address", "Password" 입력란, "Login" 버튼, 오류 메시지 요소, 헤더의 "Signup / Login"/"Logout"/"Delete Account" 링크, "Logged in as {username}" 텍스트)의 id, name, CSS 클래스, data-* 속성을 실시간으로 공유받기
 3. **Page Object 구현**: LoginPage 클래스 작성 (pages/login_page.py)
 4. **테스트 코드 작성**: 로그인 기능 테스트 케이스 작성 (tests/test_login.py)
@@ -956,12 +982,13 @@ def test_login_with_invalid_password(driver, valid_email):
 - **pytest 문서**: https://docs.pytest.org/
 
 ### 버전 관리
-- **이 PRD 버전**: 1.4 ("Logged in as {username}" 표시 형식 확인 완료 반영)
+- **이 PRD 버전**: 1.5 (사용자 요청에 따른 signup.md 테스트 계정 정합화)
 - **작성일**: 2026-07-20
-- **최종 검토일**: 2026-07-22
+- **최종 검토일**: 2026-07-25
 - **최종 승인일**: (예정)
 
 **변경 이력**:
+- v1.5 (2026-07-25): 사용자 요청 — 로그인 테스트가 로그인 전용으로 별도 생성해두던 고정 계정(`test001@example.com`, `test002@example.com`, `invalid@example.com`)을 사용하는 대신, 회원가입(Signup) 자동화(`test_signup.py`)가 실제로 생성하는 계정(`docs/prd/features/signup.md` 섹션 15)을 그대로 재사용하도록 테스트 데이터를 정합화함. 이에 따라 섹션 6(사전 조건에 계정 재사용 방침 명시), 섹션 8(Happy Path 예시 이메일을 실제 계정으로 교체), 섹션 13(NOR-001은 signup.md "정상 회원가입 테스트" 계정 `newuser001@example.com`/`John Doe`, NOR-002는 "재로그인 테스트" 계정 `newuser002@example.com`/`Jane Doe`으로 전제조건·단계·검증 포인트 갱신), 섹션 14(ABN-001은 정상 계정에 틀린 비밀번호를 입력하는 방식으로 갱신, ABN-002는 signup.md와 무관한 임의의 미등록 이메일 사용임을 명확화), 섹션 16(프로그래밍적 검증 예시 코드의 계정 값 교체), 섹션 17(테스트 계정 표를 signup.md 계정 기준으로 전면 재작성하고 진실의 원천이 signup.md임을 명시, 환경변수/JSON/Fixture 예시에 재로그인 계정 추가 및 값 교체), 섹션 18(회원가입 기능과의 의존 관계에 계정 1:1 대응 관계를 명시적으로 반영), 섹션 20("테스트 계정 준비 방식"을 갱신하고, CLAUDE.md의 테스트 독립성 원칙(10.1~10.2, 동일 실행 세션 내 순서 의존 금지)과 이번 변경이 충돌하지 않는 근거를 상세히 기술 — Automation Exercise가 계정 삭제 기능이 없어 회원가입 자동화로 생성된 계정이 영구적으로 존재하므로, 로그인 테스트는 회원가입 테스트와 매번 함께 실행하지 않아도 단독 실행 가능함), 섹션 22(테스트 계정 준비 작업 항목을 회원가입 자동화 최초 1회 실행 방식으로 구체화)를 모두 갱신. signup.md 자체와 docs/ROADMAP.md는 이번 수정 범위에서 제외함
 - v1.4 (2026-07-22): "Logged in as {username}"에 실제로 표시되는 문자열의 형식이 확인됨 — 회원가입 시 "Name" 필드에 입력한 값이 그대로 표시되며, 이메일 주소나 이메일의 로컬 파트가 아님을 확정. 이에 따라 섹션 7(UI 요소, "확인 필요" → "확인 완료" 전환), 섹션 10(LOGIN-REQ-008 구체화), 섹션 16(강화된 검증 포인트 및 예시 코드에서 "확인 필요" 문구 제거, Name 값과의 일치 검증으로 구체화), 섹션 17(테스트 계정 표에 Name 컬럼 추가, `expected_username`을 회원가입 Name 값으로 확정), 섹션 18(회원가입 기능과의 의존 관계에 Name→{username} 연결 관계 추가), 섹션 19(`get_logged_in_username()` 관련 설명 및 예시 코드 보강), 섹션 20(관련 미확정 항목을 확인 완료로 이동), 섹션 22(관련 확인 작업 항목 제거)를 모두 갱신
 - v1.3 (2026-07-22): 실제 사이트 스크린샷으로 확인된 헤더 네비게이션 구조를 반영. 로그인되지 않은 상태의 헤더가 "Login" 단독 링크가 아니라 "Signup / Login" 통합 링크로 노출됨을 확정하고, 관련 서술(섹션 4, 7, 10, 13, 16, 18) 전체 정정. 로그인 상태의 헤더에 "Delete Account" 링크와 "Logged in as {username}" 텍스트가 추가로 노출됨을 신규 확인하여 LOGIN-REQ-007/008 요구사항 신설, 섹션 7 UI 요소 표 및 헤더 목업 보강, 섹션 8·13·16의 정상 흐름/시나리오/검증 포인트에 반영. 특히 "Logged in as {username}"을 활용해 로그인 시도 계정과 실제 노출된 사용자명의 일치 여부까지 검증하는 강화된 검증 포인트를 섹션 16에 추가하고, 이에 따른 테스트 데이터 요구사항(섹션 17)과 미확정 사항(username 표시 형식, 섹션 20)을 추가. logout.md와의 표현 불일치(참고사항)를 섹션 18에 기록(logout.md 자체는 이번 범위에서 수정하지 않음)
 - v1.2 (2026-07-21): 테스트 계정 준비 방식을 사전 생성으로 확정 (테스트 실행 전 미리 생성해둔 고정 계정 사용, 테스트 중 동적 생성 방식은 사용하지 않음). 섹션 17, 20의 "확인 필요" 항목을 "확인 완료"로 전환, 섹션 22 "다음 단계"의 테스트 계정 준비 항목 문구 구체화
