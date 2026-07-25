@@ -1,0 +1,8 @@
+{
+  "valid_keywords": ["Blue", "Top", "Tshirt", "Dress", "Kids"],
+  "invalid_keywords": ["mondaykiz", "testkeyword", "qwer", "asdf"],
+  "case_insensitive_check": {
+    "lowercase_mixed": "Top",
+    "uppercase": "TOP"
+  }
+}
