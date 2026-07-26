@@ -29,7 +29,7 @@
 |-------|------|------|--------|------|----------------|
 | Phase 0 | 프로젝트 기반 설정 (디렉터리/설정/공통 유틸) | ✅ 완료 | 100% | 미정(선행 작업, project-prd.md §13.2, §21.1 근거) | 디렉터리 구조, conftest.py, base_page.py, requirements.txt 등 기본 골격 구축 |
 | Phase 1 | 기본 사용자 인증 및 탐색 (회원가입/로그인/로그아웃/상품검색) | ✅ 완료 | 100% (1-A 회원가입/1-B 로그인/1-C 로그아웃/1-D 상품 검색 4개 기능 모두 구현·테스트 작성·PASS 완료, Phase 1 통합 검증(T22)까지 완료) | 1주 (project-prd.md §8.1) | 4개 기능 Page Object + 테스트 케이스 작성, 전체 테스트 PASS |
-| Phase 2 | 장바구니 및 결제 진입 제약 확인 | ⬜ 예정 | 0% | 1주 (project-prd.md §8.2) | 장바구니 Page Object + 테스트 케이스 작성, 전체 테스트 PASS |
+| Phase 2 | 장바구니 및 결제 진입 제약 확인 | ✅ 완료 | 100% | 1주 (project-prd.md §8.2) | 장바구니 Page Object + 테스트 케이스 작성, 전체 테스트 PASS |
 | Phase 3 | 검증 및 안정성 강화 (예외/경계값 확장 검토, 크로스브라우저, CI/CD 최종화) | ⬜ 예정 | 0% | 1주 (project-prd.md §8.3) | 확장 검토 완료, Firefox 테스트 구성, CI/CD 파이프라인 최종 점검 |
 
 상태 범례: `⬜ 예정 / 🟨 진행중 / ✅ 완료 / 🟥 블록됨`
@@ -114,19 +114,22 @@
 **선행 조건**: Phase 1의 `pages/products_page.py` 존재 (1-D에서 이미 구현됨 — 이 Phase에서는 장바구니 담기 관련 메서드로 확장)
 **관련 PRD**: `docs/prd/features/shopping_cart.md` v1.4 (NOR-001~005, ABN-001~002 / CART-REQ-001~010)
 
-- [ ] `pages/products_page.py` 확장: `add_product_to_cart_by_name()`, `open_product_detail()`, `enter_quantity()`(상품 상세 페이지 전용, 목록 페이지에는 수량 입력 UI 없음), `click_add_to_cart_button()`, `click_view_cart_in_success_modal()`, `click_continue_shopping_in_success_modal()` (shopping_cart.md §19, CART-REQ-001~002)
-- [ ] `pages/cart_page.py` 신규 구현: `navigate_to_cart()`, `is_product_in_cart()`, `get_cart_row_count_for_product()`, `get_product_price()`, `get_product_quantity()`, `get_product_total()`, `delete_product()`, `is_empty_cart_message_displayed()`, `is_proceed_to_checkout_button_displayed()`, `click_proceed_to_checkout()`, `is_login_modal_displayed()` (shopping_cart.md §19, CART-REQ-003~010)
-- [ ] `test_data/products.json`(장바구니 전용)에 테스트 상품 데이터 반영: Men Tshirt(Rs. 400), Printed Off Shoulder Top - White(Rs. 315) (shopping_cart.md §17)
-- [ ] `tests/test_shopping_cart.py` 작성:
-  - [ ] NOR-001 (상품 목록 페이지에서 장바구니 추가, 항상 1개만 담김)
-  - [ ] NOR-002 (상품 상세 페이지에서 수량 지정 후 장바구니 추가)
-  - [ ] NOR-003 (장바구니에서 상품 삭제, 페이지 리로드 없이 즉시 반영 확인)
-  - [ ] NOR-004 (동일 상품 중복 담기 시 기존 행 수량 증가 확인)
-  - [ ] NOR-005 / ABN-001 (비로그인 상태에서 "Proceed To Checkout" 클릭 시 로그인 안내 모달 노출 확인, URL이 `/view_cart`로 유지되는지 확인 — 두 시나리오는 동일 사실을 다루므로 중복 구현하지 않고 하나로 통합 구현 권장, shopping_cart.md §13 NOR-005 비고)
-  - [ ] ABN-002 (빈 장바구니 상태에서 안내 문구 확인, "Proceed To Checkout" 버튼 미노출 확인)
-- [ ] "Add to cart" 버튼, "View Product" 버튼, 삭제(X) 아이콘, 담기 성공 모달, 로그인 모달 등의 Locator는 Playwright MCP(`browser_snapshot` 우선, 부족 시 `browser_evaluate`)로 직접 조사·검증한 뒤 확보 (CLAUDE.md §6, shrimp-rules.md §5) — 실제 Locator 미공유 자체는 더 이상 착수를 막는 블로커가 아님. MCP로 확인이 불가능한 사유(CLAUDE.md §6.4·shrimp-rules.md §5, 삭제·결제·제출 등 되돌리기 어려운 동작 포함)가 있는 요소만 그 시점에 사용자 확인 요청 (shopping_cart.md §20)
+- [x] Playwright MCP로 `/products`, `/product_details/2`, `/view_cart` 3개 페이지를 실제 방문하여 장바구니 관련 UI Locator 조사·확정 (`browser_snapshot` 우선, 부족 시 `browser_evaluate`) — shrimp-task-manager Task1(95점) 완료 확인됨. 삭제(X 아이콘)와 "Proceed To Checkout" 버튼은 "되돌리기 어려운 동작"으로 분류되어 실클릭 전 AskUserQuestion으로 사용자 확인을 받았고(사용자가 "둘 다 허용" 응답), 실제 클릭으로 삭제 즉시 반영, 로그인 모달 노출 + URL(`/view_cart`) 유지, 빈 장바구니 안내 문구를 모두 확인함 (CLAUDE.md §6, shopping_cart.md §20)
+- [x] `pages/base_page.py`에 `wait_for_element_invisible` 메서드 추가: 기존 4종 공통 Wait 메서드와 동일한 스타일로 구현 (shopping_cart.md §19 "재사용 가능한 메서드" 근거) — shrimp-task-manager Task2(100점) 완료 확인됨
+- [x] `utils/helpers.py`에 가격 텍스트 파싱 함수 추가: `parse_price_text(price_text: str) -> int` 구현 (shopping_cart.md §19 `parse_price_text_to_number` 예시 근거) — shrimp-task-manager Task3(100점) 완료 확인됨. **(계획 외 추가 산출물)**: 실제 사이트의 광고 스크립트(`class="google-anno"`)가 상품명 텍스트에 여분의 공백을 삽입하는 문제를 Task5 실동작 검증 중 발견하여 `normalize_whitespace(text: str) -> str` 함수도 함께 추가됨
+- [x] `pages/products_page.py` 확장: `add_product_to_cart_by_name()`, `open_product_detail()`, `enter_quantity()`(상품 상세 페이지 전용, 목록 페이지에는 수량 입력 UI 없음), `click_add_to_cart_button()`, `click_view_cart_in_success_modal()`, `click_continue_shopping_in_success_modal()` 6개 메서드와 비공개 헬퍼 `_find_card_by_product_name` 추가 (shopping_cart.md §19, CART-REQ-001~002) — shrimp-task-manager Task4(92점) 완료 확인됨. Phase 1에서 구현된 기존 요소(`SEARCH_INPUT`/`SEARCH_BUTTON`/`PRODUCT_CARDS`/`PRODUCT_NAME` 및 6개 메서드)는 변경 없이 유지됨. `pytest tests/test_product_search.py` 4개 테스트로 회귀 없음 재확인됨
+- [x] `pages/cart_page.py` 신규 구현: `navigate_to_cart()`, `is_product_in_cart()`, `get_cart_row_count_for_product()`, `get_product_price()`, `get_product_quantity()`, `get_product_total()`, `delete_product()`, `is_empty_cart_message_displayed()`, `is_proceed_to_checkout_button_displayed()`, `click_proceed_to_checkout()`, `is_login_modal_displayed()` 11개 메서드 전부 구현 (shopping_cart.md §19, CART-REQ-003~010) — shrimp-task-manager Task5(93점) 완료 확인됨
+- [x] `test_data/products.json`(장바구니 전용)에 테스트 상품 데이터 반영: Men Tshirt(Rs. 400), Printed Off Shoulder Top - White(Rs. 315) (shopping_cart.md §17) 신규 작성 완료. `conftest.py`에 기존 `accounts_data`/`search_keywords_data`와 동일한 패턴으로 `products_data`(session-scope) + `cart_test_product`/`cart_test_product_secondary` fixture 추가 — shrimp-task-manager Task6(100점) 완료 확인됨
+- [x] `tests/test_shopping_cart.py` 작성: shopping_cart.md 자동화 대상 시나리오 7개(NOR-001~005, ABN-001~002)를 6개 테스트 함수로 전부 커버 — shrimp-task-manager Task7(96점) 완료 확인됨
+  - [x] NOR-001 (상품 목록 페이지에서 장바구니 추가, 항상 1개만 담김) → `test_add_product_to_cart_from_products_page`
+  - [x] NOR-002 (상품 상세 페이지에서 수량 지정 후 장바구니 추가) → `test_add_product_to_cart_from_detail_page_with_quantity`
+  - [x] NOR-003 (장바구니에서 상품 삭제, 페이지 리로드 없이 즉시 반영 확인) → `test_delete_product_from_cart`
+  - [x] NOR-004 (동일 상품 중복 담기 시 기존 행 수량 증가 확인) → `test_duplicate_add_increases_quantity`
+  - [x] NOR-005 / ABN-001 (비로그인 상태에서 "Proceed To Checkout" 클릭 시 로그인 안내 모달 노출 확인, URL이 `/view_cart`로 유지되는지 확인 — 두 시나리오는 동일 사실을 다루므로 중복 구현하지 않고 하나로 통합 구현, shopping_cart.md §13 NOR-005 비고에서 권장한 방식) → `test_guest_checkout_shows_login_modal`
+  - [x] ABN-002 (빈 장바구니 상태에서 안내 문구 확인, "Proceed To Checkout" 버튼 미노출 확인) → `test_empty_cart_shows_message`
+- [x] "Add to cart" 버튼, "View Product" 버튼, 삭제(X) 아이콘, 담기 성공 모달, 로그인 모달 등의 Locator는 Playwright MCP(`browser_snapshot` 우선, 부족 시 `browser_evaluate`)로 직접 조사·검증한 뒤 확보 (CLAUDE.md §6, shrimp-rules.md §5) — 완료 확인됨(Task1). 삭제·결제 진입 등 "되돌리기 어려운 동작"(CLAUDE.md §6.4·shrimp-rules.md §5)에 대한 사용자 확인 절차가 실제로 정상 동작함을 이번 세션에서 실증함 (shopping_cart.md §20)
 
-**Phase 2 산출물**: `pages/products_page.py`(확장), `pages/cart_page.py`, `tests/test_shopping_cart.py`
+**Phase 2 산출물**: `pages/products_page.py`(확장), `pages/cart_page.py`(신규), `pages/base_page.py`(확장, `wait_for_element_invisible` 추가), `utils/helpers.py`(확장, `parse_price_text` + `normalize_whitespace` 추가 — `normalize_whitespace`는 계획 대비 추가로 발생한 산출물), `test_data/products.json`(신규), `conftest.py`(확장, `products_data`/`cart_test_product`/`cart_test_product_secondary` fixture 추가), `tests/test_shopping_cart.py`(신규)
 
 ---
 
@@ -192,10 +195,10 @@
 - [x] `pytest-html` 리포트(`reports/report.html`) 생성 확인 — **완료 확인됨**: 2026-07-25 실행 직후 파일 생성 확인됨(`/Users/leeseunghwan/automation/AT-EX/reports/report.html`, 46,811 bytes, 최신 타임스탬프), pytest-html 플러그인의 "Generated html report" 로그가 매 실행마다 정상 출력됨
 
 ### Phase 2 완료 조건
-- [ ] shopping_cart.md의 자동화 대상 정상/비정상 시나리오(NOR-001~005, ABN-001~002) 100% 테스트 케이스화
-- [ ] `pages/products_page.py`(확장 메서드)와 신규 `pages/cart_page.py` 구현 직후 Playwright MCP로 담기/삭제/결제 진입 등 주요 시나리오의 실제 동작을 확인 (pytest 실행 전 보조 검증, pytest를 대체하지 않음)
-- [ ] `pytest tests/test_shopping_cart.py` PASS, Phase 1 테스트와 함께 실행 시에도 누적 성공률 100% (pytest 기준)
-- [ ] `pages/products_page.py`와 `pages/cart_page.py` 간 책임 분리가 shopping_cart.md §19 기준과 일치 (담기 진입은 ProductsPage, 조회/삭제/결제진입은 CartPage)
+- [x] shopping_cart.md의 자동화 대상 정상/비정상 시나리오(NOR-001~005, ABN-001~002) 100% 테스트 케이스화 — **완료 확인됨**: `tests/test_shopping_cart.py`의 6개 테스트 함수로 7개 시나리오가 전부 매핑됨(NOR-005/ABN-001은 shopping_cart.md §13 NOR-005 비고의 권장에 따라 `test_guest_checkout_shows_login_modal` 하나로 통합 구현)
+- [x] `pages/products_page.py`(확장 메서드)와 신규 `pages/cart_page.py` 구현 직후 Playwright MCP로 담기/삭제/결제 진입 등 주요 시나리오의 실제 동작을 확인 (pytest 실행 전 보조 검증, pytest를 대체하지 않음) — **완료 확인됨**: Locator 조사 Task(Task1)에서 Playwright MCP 실클릭으로 담기/성공 모달/삭제/결제 진입/빈 장바구니 전체 흐름을 확인했고, ProductsPage 확장 Task(Task4)에서 ProductsPage+CartPage 연동 흐름을 Selenium 스모크로 추가 확인함. 삭제·결제 진입처럼 되돌리기 어려운 동작은 실클릭 전 사용자 확인(AskUserQuestion)을 거쳐 안전하게 검증됨
+- [x] `pytest tests/test_shopping_cart.py` PASS, Phase 1 테스트와 함께 실행 시에도 누적 성공률 100% (pytest 기준) — **완료 확인됨**: `pytest tests/test_shopping_cart.py -v` 단독 실행 결과 6 passed(26.62s). `pytest tests/test_signup.py tests/test_login.py tests/test_logout.py tests/test_product_search.py tests/test_shopping_cart.py --html=reports/report.html` 통합 실행 결과 **18 passed, 0 failed(93.61s)**. 1차 시도에서 `test_signup_then_logout_and_relogin` 1건이 사이트 광고 인터스티셜로 인한 계정 삭제 확인 페이지 로딩 지연 타임아웃으로 실패했으나, Phase 2 변경과 무관한 Phase 1 기존 코드의 플레이키 이슈로 판명되어 단독 재실행 시 즉시 PASS로 재현됨을 확인함(위 Phase 1 완료 조건 스크린샷 항목에 이미 기록된 것과 동일 종류의 현상). `reports/report.html` 최신 타임스탬프로 재생성 확인됨
+- [x] `pages/products_page.py`와 `pages/cart_page.py` 간 책임 분리가 shopping_cart.md §19 기준과 일치 (담기 진입은 ProductsPage, 조회/삭제/결제진입은 CartPage) — **완료 확인됨**: 설계 그대로 구현되어 ProductsPage는 담기 진입 메서드만, CartPage는 조회/삭제/결제진입 메서드만 보유함
 
 ### Phase 3 완료 조건
 - [ ] Phase 3 "검토" Task 6건에 대한 착수 여부 결정 및 결과 문서화(착수하지 않기로 한 경우 사유 기록)
@@ -209,13 +212,13 @@
 
 우선순위 순으로 착수를 권장하는 Task입니다.
 
-Phase 0(기반 설정)과 Phase 1(1-A 회원가입, 1-B 로그인, 1-C 로그아웃, 1-D 상품 검색)은 구현·테스트 작성·PASS와 Phase 1 통합 검증(T22)까지 모두 완료되었습니다. 다음 우선순위는 Phase 2(장바구니 및 결제 진입 제약 확인) 착수입니다.
+Phase 0(기반 설정), Phase 1(1-A 회원가입, 1-B 로그인, 1-C 로그아웃, 1-D 상품 검색), Phase 2(장바구니 및 결제 진입 제약 확인)는 구현·테스트 작성·PASS까지 모두 완료되었습니다. 다음 우선순위는 Phase 3(검증 및 안정성 강화) 착수입니다.
 
-1. **Phase 2 착수: `pages/products_page.py` 확장**: `add_product_to_cart_by_name()`, `open_product_detail()`, `enter_quantity()`, `click_add_to_cart_button()`, `click_view_cart_in_success_modal()`, `click_continue_shopping_in_success_modal()` 구현 (shopping_cart.md §19, CART-REQ-001~002) — 상품 목록/상세 페이지의 "Add to cart" 버튼 등 Locator는 Playwright MCP로 직접 조사·검증 후 확보 (CLAUDE.md §6, shrimp-rules.md §5)
-2. **`pages/cart_page.py` 신규 구현**: `navigate_to_cart()`, `is_product_in_cart()`, `get_cart_row_count_for_product()`, `get_product_price()`, `get_product_quantity()`, `get_product_total()`, `delete_product()`, `is_empty_cart_message_displayed()`, `is_proceed_to_checkout_button_displayed()`, `click_proceed_to_checkout()`, `is_login_modal_displayed()` (shopping_cart.md §19, CART-REQ-003~010)
-3. **`test_data/products.json`(장바구니 전용) 작성**: Men Tshirt(Rs. 400), Printed Off Shoulder Top - White(Rs. 315) 반영 (shopping_cart.md §17)
-4. **`tests/test_shopping_cart.py` 작성 및 실행**: NOR-001~004, NOR-005/ABN-001(통합 구현 권장), ABN-002 작성 후 PASS 확인, 구현 직후 Playwright MCP로 담기/삭제/결제 진입 흐름 보조 검증 (shopping_cart.md §13~14, §19)
-5. **Phase 2 통합 검증**: Phase 1 테스트(`test_signup.py`, `test_login.py`, `test_logout.py`, `test_product_search.py`)와 함께 전체 실행하여 누적 PASS 100% 확인, `reports/report.html` 재확인 후 Phase 2 완료 조건(섹션 6) 충족 여부 점검
+1. **Phase 3 "검토" Task 6건에 대한 착수 여부 결정 및 결과 문서화**: 회원가입/로그인/상품검색/장바구니 4건은 각 기능 PRD(signup.md §11·§20, login.md §12·§22, product_search.md §12, shopping_cart.md §12·§20)에서 이미 자동화 범위 제외로 확정되어 있으므로, 착수하지 않기로 한 사유를 그대로 기록하는 방식으로 정리 가능한지 우선 검토 (섹션 3 Phase 3 참고)
+2. **로그아웃 세션 만료 시나리오 검토의 선행 블로커 해소**: 세션 타임아웃 시간이 project-prd.md §19.1 기준으로 여전히 미확정이므로, 확정 전까지 해당 Phase 3 Task는 착수하지 않음(섹션 5 블로커 트래킹 표 참고) — 확정 여부를 사용자에게 확인
+3. **Firefox WebDriver 추가 및 크로스 브라우저 테스트 구성**: Phase 1~2 정상 시나리오를 Firefox에서 재실행하여 PASS 확인 (project-prd.md §8.3, §11.2, §18.2)
+4. **`.github/workflows/test.yml` 최종 점검**: 실패 시 알림, HTML 리포트 아티팩트 저장, 매 커밋 자동 실행 안정성 확인 (project-prd.md §11.3, §13.4)
+5. **성능 테스트 요구사항 정의 문서화**: 실제 성능 테스트 구현은 범위 밖으로 유지하되, 향후 확장을 위한 요구사항만 문서화 (project-prd.md §8.3, §6.1)
 
 ---
 
@@ -227,6 +230,7 @@ Phase 0(기반 설정)과 Phase 1(1-A 회원가입, 1-B 로그인, 1-C 로그아
 - **v1.3 (2026-07-25)**: shrimp-task-manager MCP의 Task 실행 이력(T1~T19, 각 `execute_task` → 구현 → `verify_task` 80점 이상으로 completed 처리)을 저장소 실제 파일 상태와 교차검증하여 진행 상태를 재동기화. Phase 0(디렉터리 구조, `requirements.txt`, `pytest.ini`, `config/settings.py`, `pages/base_page.py`, `conftest.py`, `utils/logger.py`, `utils/helpers.py` 골격, `test_data/accounts.json` 골격, `.github/workflows/test.yml` 초안, `tests/test_smoke.py`)의 모든 Task를 완료로 체크하고 마일스톤 상태를 ⬜ 예정 → ✅ 완료(100%)로 갱신. Phase 1의 1-A 회원가입(`pages/login_page.py`·`signup_page.py`·`account_created_page.py`, `test_data/accounts.json` signup 데이터, `tests/test_signup.py` NOR-001~002 PASS), 1-B 로그인(`pages/login_page.py` 로그인 폼 메서드, `pages/home_page.py`, `test_data/accounts.json` shared_login_accounts, `tests/test_login.py` NOR-001~002/ABN-001~002 PASS), 1-C 로그아웃(`pages/home_page.py`·`login_page.py` 로그아웃 관련 메서드, `conftest.py`의 `logged_in_user` fixture, `tests/test_logout.py` NOR-001~002 PASS)의 Task를 모두 완료로 체크. 회원가입 테스트가 생성한 계정을 정리하기 위해 원래 로드맵에 계획되지 않았던 `pages/delete_account_page.py`가 1-A 작업 중 추가로 구현된 사실을 확인하여 1-A Task 목록과 "Phase 1 산출물" 목록에 반영. 1-D 상품 검색은 `pages/products_page.py` 구현 완료(기존 v1.2에서 이미 체크)만 유지하고, `test_data/search_keywords.json`과 `tests/test_product_search.py`는 저장소에 파일이 존재하지 않음을 확인하여 미체크로 유지. 이에 따라 Phase 1 마일스톤 진행률을 "세부 산정 필요" → "약 80%"로 구체화(상태는 여전히 🟨 진행중, 1-D 미완료로 ✅ 완료 아님). 섹션 6 Definition of Done에서 Phase 0의 5개 항목을 모두 체크(스모크 테스트 PASS 근거)하고, Phase 1은 로그인 테스트 계정·Name 일치 확인 1개 항목만 체크하고 나머지(100% 테스트 케이스화, Playwright MCP 실동작 확인, 4개 파일 전체 PASS, 스크린샷 저장 확인, HTML 리포트 생성 확인)는 실제 확인 근거가 없거나 product_search 누락으로 미체크 유지하며 각 항목에 현재 상태를 설명하는 문구를 추가. 섹션 7 "다음 액션"을 1-D 잔여 Task(`search_keywords.json` 작성, `test_product_search.py` 작성·실행) 및 Phase 1 통합 검증 중심으로 갱신. 1-B의 "로그인 테스트 계정 사전 생성" 블로커 체크박스, 1-C의 "참고(자동화 대상 아님)" 항목, 섹션 5 블로커/확인 필요 항목 트래킹 표, Phase 2·Phase 3 관련 내용은 이번 재동기화 범위에서 제외하여 그대로 유지.
 - **v1.4 (2026-07-25)**: Phase 1 통합 검증(T22) 완료를 반영. 사용자가 직접 실행/확인한 검증 결과(T21에서 `tests/test_product_search.py` 신규 작성 완료로 4개 기능 12개 시나리오 전부 테스트 케이스화, T11~T21 전 구간 Playwright MCP 보조 검증 수행 기록 확인, `pytest tests/test_signup.py tests/test_login.py tests/test_logout.py tests/test_product_search.py --html=reports/report.html` 실행 결과 12 passed·실패 0건, 로그인 계정·Name 일치 재확인, 실제 실패 사례에서 `screenshots/` 자동 저장 6건 확인, `reports/report.html` 생성 확인)를 근거로 섹션 6 "Phase 1 완료 조건" 6개 항목을 모두 미체크 → 체크 완료로 갱신하고 각 항목의 설명 문구를 실제 검증 결과로 교체. 섹션 2 마일스톤 요약 표의 Phase 1 상태를 `🟨 진행중 약 80%` → `✅ 완료 100%`로 갱신. 섹션 7 "다음 액션"을 Phase 1 잔여 Task 중심에서 Phase 2(장바구니) 착수 Task(`pages/products_page.py` 확장, `pages/cart_page.py` 신규 구현, `test_data/products.json` 작성, `tests/test_shopping_cart.py` 작성·실행, Phase 2 통합 검증) 중심으로 전면 교체. 이번 갱신은 섹션 2(Phase 1 행)·섹션 6(Phase 1)·섹션 7·본 변경 이력 항목에 한정되며, 섹션 3의 Phase 1 세부 Task 체크박스(1-D의 `search_keywords.json`/`test_product_search.py` 항목, "Phase 1 산출물" 목록의 "미작성" 표기 등)와 Phase 0/2/3, 섹션 4, 섹션 5 블로커 트래킹 표는 이번 갱신 범위에서 제외되어 그대로 유지됨. **참고**: 이로 인해 섹션 3의 1-D 관련 체크박스 및 "Phase 1 산출물" 목록 문구가 섹션 6과 일시적으로 불일치하는 상태이며(예: `tests/test_product_search.py(미작성)` 표기가 아직 남아 있음), 이는 다음 갱신 시 함께 정리가 필요함.
 - **v1.5 (2026-07-25)**: v1.4에서 남겨두었던 섹션 3-섹션 6 불일치를 보완. 섹션 3의 "1-D. 상품 검색" Task 목록 중 `test_data/search_keywords.json` 작성, `tests/test_product_search.py` 작성 두 항목을 `[ ]` → `[x]`로 갱신(T21에서 작성 완료 및 PASS 확인, T22 통합 실행에서 재확인된 근거 반영). "Phase 1 산출물" 목록의 `tests/test_product_search.py(미작성)` 표기를 완료된 산출물 표기로 수정. 이번 보완은 섹션 3의 해당 두 체크박스와 산출물 목록 문구에 한정되며, 그 외 섹션은 변경하지 않음.
+- **v1.6 (2026-07-26)**: Phase 2(장바구니 및 결제 진입 제약 확인) 완료를 반영. shrimp-task-manager MCP로 Phase 2를 7개 Task로 분해해 순차 실행했고, 7개 Task 모두 `execute_task` → 구현 → `verify_task`(80점 이상, Task1 95점/Task2 100점/Task3 100점/Task4 92점/Task5 93점/Task6 100점/Task7 96점)로 completed 처리된 이력을 근거로 갱신함. 섹션 2 마일스톤 요약 표의 Phase 2 상태를 `⬜ 예정 0%` → `✅ 완료 100%`로 갱신. 섹션 3 "Phase 2" 하위 전 체크박스를 `[x]`로 갱신하고, `tests/test_shopping_cart.py`의 NOR-001~005/ABN-001~002 각 항목에 실제 매핑된 테스트 함수명(`test_add_product_to_cart_from_products_page`, `test_add_product_to_cart_from_detail_page_with_quantity`, `test_delete_product_from_cart`, `test_duplicate_add_increases_quantity`, `test_guest_checkout_shows_login_modal`, `test_empty_cart_shows_message`)을 추가. "Phase 2 산출물" 목록을 실제 산출물(`pages/products_page.py` 확장, `pages/cart_page.py` 신규, `pages/base_page.py` 확장, `utils/helpers.py` 확장, `test_data/products.json` 신규, `conftest.py` 확장, `tests/test_shopping_cart.py` 신규)로 갱신. 섹션 6 "Phase 2 완료 조건" 4개 항목을 모두 체크 완료 처리하고, `pytest tests/test_shopping_cart.py -v`(6 passed, 26.62s) 및 Phase 1~2 통합 실행(`pytest tests/test_signup.py tests/test_login.py tests/test_logout.py tests/test_product_search.py tests/test_shopping_cart.py --html=reports/report.html`, 18 passed·0 failed·93.61s) 결과를 근거로 명시. 섹션 7 "다음 액션"을 Phase 3(검증 및 안정성 강화) 착수 관점으로 전면 교체. **[계획 외 발견 사항]** (1) Task3 실행 중 실제 사이트의 광고 스크립트(`class="google-anno"`)가 상품명 텍스트에 여분의 공백을 삽입하는 문제를 발견하여, 계획에 없던 `utils/helpers.py`의 `normalize_whitespace(text: str) -> str` 함수가 추가로 구현됨(섹션 3 Phase 2 Task 목록·산출물에 반영). (2) 삭제(X 아이콘)·"Proceed To Checkout" 클릭처럼 "되돌리기 어려운 동작"에 대해 CLAUDE.md §6.4·shrimp-rules.md §5에 따라 실클릭 전 AskUserQuestion으로 사용자 확인을 받는 절차가 Task1에서 실제로 정상 동작함을 확인함(사용자가 "둘 다 허용" 응답 후 실클릭으로 검증 완료). (3) 통합 실행 1차 시도에서 `test_signup_then_logout_and_relogin` 1건이 사이트 광고 인터스티셜로 인한 타임아웃으로 실패했으나, Phase 2 변경과 무관한 Phase 1 기존 코드의 플레이키 이슈로 판명되어 단독 재실행 시 즉시 PASS로 재현됨을 재확인함(ROADMAP.md 기존 버전 섹션 6 Phase 1 완료 조건에 이미 기록된 것과 동일 종류의 현상). 섹션 5 블로커 트래킹 표는 이번 갱신으로 정리가 필요한 Phase 2 관련 행이 없음을 확인하여(Locator 미공유 관련 정책 변경은 v1.2에서 이미 반영됨, `shopping_cart.md` §22 project-prd.md 정합성 검토 항목은 Phase 진행에 직접 영향이 없어 그대로 유지) 변경하지 않음. 섹션 3의 Phase 0/1 내용, 섹션 4(기능 의존성 개요), 섹션 5(블로커 트래킹 표)는 이번 갱신 범위에서 제외되어 그대로 유지됨.
 
 ---
 
