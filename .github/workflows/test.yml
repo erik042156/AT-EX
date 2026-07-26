@@ -5,6 +5,10 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox]
     steps:
       - uses: actions/checkout@v4
 
@@ -16,11 +20,23 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run pytest
-        run: pytest tests/ --html=reports/report.html
+        env:
+          HEADLESS: "true"
+        run: pytest tests/ --browser=${{ matrix.browser }} --html=reports/report-${{ matrix.browser }}.html
 
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: reports
+          name: reports-${{ matrix.browser }}
           path: reports/
+
+      - name: Notify Slack on failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,message,commit,author,ref,workflow,job
+          text: "[${{ matrix.browser }}] 테스트 실패"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
