@@ -1,6 +1,7 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 
+from config.settings import PAGE_LOAD_TIMEOUT
 from pages.account_created_page import AccountCreatedPage
 from pages.base_page import BasePage, Locator
 
@@ -79,7 +80,9 @@ class SignupPage(BasePage):
     self.find_element_visible(self.ADDRESS2_INPUT).send_keys(address2)
 
   def select_country(self, country: str) -> None:
-    Select(self.find_element(self.COUNTRY_SELECT)).select_by_visible_text(country)
+    country_select = self.find_element(self.COUNTRY_SELECT)
+    self.scroll_into_view(country_select)
+    Select(country_select).select_by_visible_text(country)
 
   def enter_state(self, state: str) -> None:
     self.find_element_visible(self.STATE_INPUT).send_keys(state)
@@ -95,7 +98,7 @@ class SignupPage(BasePage):
 
   def click_create_account_button(self) -> None:
     self.click_when_clickable(self.CREATE_ACCOUNT_BUTTON)
-    self.wait_for_element_presence(AccountCreatedPage.ACCOUNT_CREATED_MESSAGE)
+    self.wait_for_element_presence(AccountCreatedPage.ACCOUNT_CREATED_MESSAGE, timeout=PAGE_LOAD_TIMEOUT)
 
   def is_on_signup_page(self) -> bool:
     return "/signup" in self.driver.current_url

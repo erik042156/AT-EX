@@ -3,7 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from config.settings import DEFAULT_TIMEOUT
+from config.settings import PAGE_LOAD_TIMEOUT
 from pages.base_page import BasePage, Locator
 from pages.delete_account_page import DeleteAccountPage
 from utils.logger import get_logger
@@ -28,7 +28,7 @@ class HomePage(BasePage):
 
   def click_delete_account_link(self) -> None:
     self.click_when_clickable(self.DELETE_ACCOUNT_LINK)
-    self.wait_for_element_presence(DeleteAccountPage.ACCOUNT_DELETED_MESSAGE)
+    self.wait_for_element_presence(DeleteAccountPage.ACCOUNT_DELETED_MESSAGE, timeout=PAGE_LOAD_TIMEOUT)
 
   def get_logged_in_username(self) -> str:
     text = self.find_element(self.LOGGED_IN_AS_TEXT).text
@@ -36,7 +36,7 @@ class HomePage(BasePage):
 
   def click_logout_link(self) -> None:
     self.click_when_clickable(self.LOGOUT_LINK)
-    wait = WebDriverWait(self.driver, DEFAULT_TIMEOUT)
+    wait = WebDriverWait(self.driver, PAGE_LOAD_TIMEOUT)
     try:
       wait.until(EC.url_contains("/login"))
     except TimeoutException as e:

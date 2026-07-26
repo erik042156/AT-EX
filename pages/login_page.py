@@ -3,7 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-from config.settings import BASE_URL, DEFAULT_TIMEOUT
+from config.settings import BASE_URL, PAGE_LOAD_TIMEOUT
 from pages.base_page import BasePage, Locator
 from pages.home_page import HomePage
 from pages.signup_page import SignupPage
@@ -32,7 +32,7 @@ class LoginPage(BasePage):
 
   def click_signup_button(self) -> None:
     self.click_when_clickable(self.SIGNUP_BUTTON)
-    self.wait_for_element_presence(SignupPage.NAME_INPUT)
+    self.wait_for_element_presence(SignupPage.NAME_INPUT, timeout=PAGE_LOAD_TIMEOUT)
 
   def enter_email(self, email: str) -> None:
     self.find_element_visible(self.LOGIN_EMAIL_INPUT).send_keys(email)
@@ -42,7 +42,7 @@ class LoginPage(BasePage):
 
   def click_login_button(self) -> None:
     self.click_when_clickable(self.LOGIN_BUTTON)
-    wait = WebDriverWait(self.driver, DEFAULT_TIMEOUT)
+    wait = WebDriverWait(self.driver, PAGE_LOAD_TIMEOUT)
     try:
       wait.until(
         EC.any_of(

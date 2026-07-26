@@ -1,0 +1,10 @@
+{
+  "cart_test_product_1": {
+    "name": "Men Tshirt",
+    "expected_price": 400
+  },
+  "cart_test_product_2": {
+    "name": "Printed Off Shoulder Top - White",
+    "expected_price": 315
+  }
+}

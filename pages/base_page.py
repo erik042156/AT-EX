@@ -29,8 +29,19 @@ class BasePage:
   def find_elements(self, locator: Locator) -> list[WebElement]:
     return self.driver.find_elements(*locator)
 
+  def scroll_into_view(self, element: WebElement) -> None:
+    self.driver.execute_script(
+      "arguments[0].scrollIntoView({block: 'center', inline: 'center'});", element
+    )
+
   def click(self, locator: Locator) -> None:
-    self.find_element(locator).click()
+    element = self.find_element(locator)
+    self.scroll_into_view(element)
+    element.click()
+
+  def click_element(self, element: WebElement) -> None:
+    self.scroll_into_view(element)
+    element.click()
 
   def get_page_title(self) -> str:
     return self.driver.title
@@ -52,7 +63,9 @@ class BasePage:
   def click_when_clickable(self, locator: Locator, timeout: Optional[int] = None) -> None:
     wait = WebDriverWait(self.driver, timeout or DEFAULT_TIMEOUT)
     try:
-      wait.until(EC.element_to_be_clickable(locator)).click()
+      element = wait.until(EC.element_to_be_clickable(locator))
+      self.scroll_into_view(element)
+      element.click()
     except TimeoutException as e:
       logger.error(f"요소가 클릭 가능해지기를 기다리는 중 타임아웃 발생: {locator}, {str(e)}")
       raise
@@ -73,4 +86,12 @@ class BasePage:
       return wait.until(EC.text_to_be_present_in_element(locator, text))
     except TimeoutException as e:
       logger.error(f"요소의 텍스트가 '{text}'가 되기를 기다리는 중 타임아웃 발생: {locator}, {str(e)}")
+      raise
+
+  def wait_for_element_invisible(self, locator: Locator, timeout: Optional[int] = None) -> bool:
+    wait = WebDriverWait(self.driver, timeout or DEFAULT_TIMEOUT)
+    try:
+      return wait.until(EC.invisibility_of_element_located(locator))
+    except TimeoutException as e:
+      logger.error(f"요소가 사라지기를 기다리는 중 타임아웃 발생: {locator}, {str(e)}")
       raise
