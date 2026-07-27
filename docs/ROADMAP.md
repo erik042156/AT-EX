@@ -7,7 +7,7 @@
 ### 기준 문서 및 버전
 | 문서 | 버전 |
 |------|------|
-| `docs/prd/project-prd.md` | v1.2 |
+| `docs/prd/project-prd.md` | v1.3 |
 | `docs/prd/features/signup.md` | v1.4 |
 | `docs/prd/features/login.md` | v1.4 |
 | `docs/prd/features/logout.md` | v1.4 |
@@ -18,7 +18,7 @@
 
 ### 작성/갱신 이력
 - **작성일**: 2026-07-24
-- **최종 갱신일**: 2026-07-25
+- **최종 갱신일**: 2026-07-26
 - **상태**: shrimp-task-manager MCP의 Task 실행 이력(T1~T19 completed)을 저장소 실제 파일 상태와 교차검증하여 진행 상태를 전면 재동기화(v1.3). Phase 0 전체와 Phase 1의 1-A/1-B/1-C가 실제로 구현·테스트 작성·PASS까지 완료되어 있음을 확인하고 체크박스·진행률·상태를 갱신했습니다. Phase 1의 1-D는 `pages/products_page.py` 구현까지만 완료되어 있어(v1.2에서 이미 확인) 아직 진행중이며, `test_data/search_keywords.json`과 `tests/test_product_search.py`는 저장소에 존재하지 않음을 확인했습니다. 이전 정책 변경(v1.2, Locator 확보 절차)에 대한 설명은 변경 이력 섹션 8을 참고하십시오. 이번 재동기화는 Phase 0/1(1-D 일부 제외)에 한정되며, Phase 2/3과 섹션 5 블로커 트래킹 표는 손대지 않았습니다.
 
 ---
@@ -30,7 +30,7 @@
 | Phase 0 | 프로젝트 기반 설정 (디렉터리/설정/공통 유틸) | ✅ 완료 | 100% | 미정(선행 작업, project-prd.md §13.2, §21.1 근거) | 디렉터리 구조, conftest.py, base_page.py, requirements.txt 등 기본 골격 구축 |
 | Phase 1 | 기본 사용자 인증 및 탐색 (회원가입/로그인/로그아웃/상품검색) | ✅ 완료 | 100% (1-A 회원가입/1-B 로그인/1-C 로그아웃/1-D 상품 검색 4개 기능 모두 구현·테스트 작성·PASS 완료, Phase 1 통합 검증(T22)까지 완료) | 1주 (project-prd.md §8.1) | 4개 기능 Page Object + 테스트 케이스 작성, 전체 테스트 PASS |
 | Phase 2 | 장바구니 및 결제 진입 제약 확인 | ✅ 완료 | 100% | 1주 (project-prd.md §8.2) | 장바구니 Page Object + 테스트 케이스 작성, 전체 테스트 PASS |
-| Phase 3 | 검증 및 안정성 강화 (예외/경계값 확장 검토, 크로스브라우저, CI/CD 최종화) | ⬜ 예정 | 0% | 1주 (project-prd.md §8.3) | 확장 검토 완료, Firefox 테스트 구성, CI/CD 파이프라인 최종 점검 |
+| Phase 3 | 검증 및 안정성 강화 (예외/경계값 확장 검토, 크로스브라우저, CI/CD 최종화) | 🟨 진행중 | 약 70% (8개 항목 중 완료 5 / 부분완료 2 / 보류 1 — 아래 근거 참고) | 1주 (project-prd.md §8.3) | 확장 검토 완료, Firefox 테스트 구성, CI/CD 파이프라인 최종 점검 — **완료 아님**: shrimp-task-manager MCP로 6개 Task(Task1~6)를 순차 실행해 전부 `execute_task`→구현/조사→`verify_task`(80점 이상)로 completed 처리되었으나, 검증 과정에서 (1) GitHub Actions 실제 CI 실행(run_id 30201769656)에서 chrome/firefox 모두 대량 테스트 실패(각 16 failed/2 passed/2 errors, 로컬 Chrome 18 passed와 상반됨, 원인 미확정), (2) Firefox 로컬 100% 안정적 통과 미달성(geckodriver 인프라 불안정성으로 판명, CI 검증으로 이관), (3) 저장소 루트에 README.md 파일이 존재하지 않아 project-prd.md §14.4 미충족, (4) SLACK_WEBHOOK_URL 시크릿 미등록으로 Slack 실패 알림 미동작이라는 4건의 미해결 사항이 새로 확인되어 ✅ 완료로 표기하지 않음 (섹션 3·5·6 상세 참고) |
 
 상태 범례: `⬜ 예정 / 🟨 진행중 / ✅ 완료 / 🟥 블록됨`
 
@@ -138,16 +138,18 @@
 **목표**: 예외/경계값 시나리오 확장 검토, 크로스 브라우저 지원, CI/CD 파이프라인 최종화 (project-prd.md §8.3)
 **선행 조건**: Phase 1, Phase 2의 모든 정상/비정상 시나리오 테스트 PASS
 
-- [ ] (검토) 회원가입 실패/유효성 검증 케이스(중복 이메일, 필수 필드 누락 등) 자동화 확장 여부 논의 — 현재 자동화 범위에서 명시적으로 제외됨 (signup.md §11, §20)
-- [ ] (검토) 로그인 필수 필드 공란 시나리오, 경계값(비밀번호 길이 등) 자동화 확장 여부 논의 — 현재 자동화 범위에서 명시적으로 제외됨 (login.md §12, §22)
-- [ ] (검토, 블로커 해소 후 착수) 로그아웃 세션 만료 관련 시나리오 자동화 검토 — **세션 타임아웃 시간이 프로젝트 전체 차원에서 아직 미확정**이므로 확정 전까지는 착수 불가 (logout.md §12, §22, project-prd.md §19.1)
-- [ ] (검토) 상품 검색 카테고리/브랜드 필터링, 정렬 기능 자동화 확장 여부 논의 — 현재 자동화 범위에서 명시적으로 제외됨 (product_search.md §12)
-- [ ] (검토) 장바구니 최대 담기 개수 제한, 데이터 저장 방식(세션/쿠키/DB) 검증 여부 재논의 — 사용자 판단으로 현재 자동화 범위에서 제외됨 (shopping_cart.md §12, §20)
-- [ ] Firefox WebDriver 추가 및 Phase 1~2 정상 시나리오 대상 크로스 브라우저 테스트 구성 (project-prd.md §8.3, §11.2, §18.2)
-- [ ] `.github/workflows/test.yml` 최종 점검: 실패 시 알림, HTML 리포트 아티팩트 저장, 매 커밋 자동 실행 안정성 확인 (project-prd.md §11.3, §13.4)
-- [ ] 성능 테스트 요구사항 정의 문서화 (실제 성능 테스트 구현은 범위 밖 유지, project-prd.md §8.3, §6.1)
+- [x] (검토) 회원가입 실패/유효성 검증 케이스(중복 이메일, 필수 필드 누락 등) 자동화 확장 여부 논의 — shrimp-task-manager **Task1(95점)** 완료 확인됨: signup.md §11·§20을 재확인해 "이번 프로젝트 범위 한정" 스코프 사유로 이미 자동화 제외가 확정되어 있음을 원문 근거로 재검증함. **결론: 재논의 불필요, 착수하지 않음. 코드/문서 변경 없음.**
+- [x] (검토) 로그인 필수 필드 공란 시나리오, 경계값(비밀번호 길이 등) 자동화 확장 여부 논의 — shrimp-task-manager **Task1(95점)** 완료 확인됨: login.md §12·§22를 재확인해 "이번 프로젝트 범위 한정" 스코프 사유로 이미 자동화 제외가 확정되어 있음을 원문 근거로 재검증함. **결론: 재논의 불필요, 착수하지 않음. 코드/문서 변경 없음.**
+- [ ] (검토, 블로커 해소 후 착수) 로그아웃 세션 만료 관련 시나리오 자동화 검토 — shrimp-task-manager **Task2(90점)** 완료 확인됨: project-prd.md §19.1, logout.md §9·§12·§20·§22를 재확인해 **세션 타임아웃 값이 여전히 미확정**임을 재검증함. 이번 세션에서 사용자가 "세션 타임아웃은 작업에서 제외"라고 명시적으로 지시함. **결론: 세션 타임아웃 여전히 미확정, 착수하지 않음. 섹션 5 블로커 트래킹 표의 해당 항목은 새로운 사실이 없어 변경 없이 그대로 유지됨.**
+- [x] (검토) 상품 검색 카테고리/브랜드 필터링, 정렬 기능 자동화 확장 여부 논의 — shrimp-task-manager **Task1(95점)** 완료 확인됨: product_search.md §12를 재확인해 "이번 프로젝트 범위 한정" 스코프 사유로 이미 자동화 제외가 확정되어 있음을 원문 근거로 재검증함. **결론: 재논의 불필요, 착수하지 않음. 코드/문서 변경 없음.**
+- [x] (검토) 장바구니 최대 담기 개수 제한, 데이터 저장 방식(세션/쿠키/DB) 검증 여부 재논의 — shrimp-task-manager **Task1(95점)** 완료 확인됨: shopping_cart.md §12·§20를 재확인해 "사용자 판단에 따른 명시적 제외 결정"으로 이미 확정되어 있음을 원문 근거로 재검증함(4건 중 가장 확정적). **결론: 재논의 불필요, 착수하지 않음. 코드/문서 변경 없음.**
+- [ ] **(부분 완료)** Firefox WebDriver 추가 및 Phase 1~2 정상 시나리오 대상 크로스 브라우저 테스트 구성 (project-prd.md §8.3, §11.2, §18.2) — shrimp-task-manager **Task3(85점)** 완료 확인됨. `conftest.py`에 `pytest_addoption`으로 `--browser`(기본값 chrome) 옵션 추가, `driver` fixture를 request 파라미터로 확장. 기존 5개 테스트 파일 무수정, `--browser` 옵션 없이 실행 시 기존과 동일하게 Chrome으로 동작(하위 호환 확인). 검증 중 실제 크로스 브라우저 버그 3건을 발견해 수정함: (1) 광고 iframe이 클릭을 가로채는 `ElementClickInterceptedException` → `pages/base_page.py`에 `scroll_into_view()`/`click_element()` 추가, `click()`/`click_when_clickable()`도 스크롤 후 클릭하도록 수정 (2) project-prd.md §11.2가 명시한 1920x1080 창 크기가 애초에 미구현이었던 결함 발견 → `conftest.py`에 `driver.set_window_size(1920, 1080)` 추가 (3) 광고 많은 페이지 전환 후 대기가 `DEFAULT_TIMEOUT`(10초) 경계에서 간헐적 실패 → `config/settings.py`에 `PAGE_LOAD_TIMEOUT`(20초, project-prd.md §11.4 기 명시값) 신설, `account_created_page.py`/`home_page.py`/`signup_page.py`/`login_page.py`/`products_page.py`의 페이지 전환 대기 지점 5곳에 일관 적용. Chrome 5개 테스트 파일 재실행 결과 18 passed로 회귀 없음 재확인. **그러나** Firefox는 로컬에서 7회 이상 반복 검증(계정 정리 포함)했으나 100% 재현 가능한 완전한 통과는 달성하지 못함 — 15회 반복 실험으로 순수 `driver.get()` 호출만으로도 geckodriver가 페이지/광고와 무관하게 WebDriver 프로토콜 레벨에서 120초간 응답하지 않는 경우(ReadTimeoutError/socket.timeout)를 확인해, 로컬 macOS에서 Firefox 세션을 반복 기동하며 생긴 geckodriver 자체의 인프라 불안정성이며 애플리케이션 코드로 해결할 문제가 아님을 실험으로 검증함. 사용자가 "현재 상태로 종료 후 CI에서 재확인"을 명시적으로 선택해 **로컬 완전 안정화는 이번 Task 범위에서 제외되고 Task4(CI)로 이관됨**
+- [ ] **(부분 완료)** `.github/workflows/test.yml` 최종 점검: 실패 시 알림, HTML 리포트 아티팩트 저장, 매 커밋 자동 실행 안정성 확인 (project-prd.md §11.3, §13.4) — shrimp-task-manager **Task4(82점)** 완료 확인됨. 실제 발견한 결함(HEADLESS 환경변수 미설정으로 디스플레이 없는 GitHub Actions 환경에서 Chrome 실행 실패 가능성) 수정: "Run pytest" 스텝에 `env.HEADLESS="true"` 추가. `strategy.matrix.browser=[chrome, firefox]`(`fail-fast: false`) 도입, `pytest tests/ --browser=${{ matrix.browser }} --html=reports/report-${{ matrix.browser }}.html`로 브라우저별 리포트 분리, 아티팩트도 `reports-${{ matrix.browser }}`로 분리 업로드. 사용자가 "GitHub 기본 이메일 알림으로는 부족, 별도 Slack 알림 구축"을 명시적으로 요청해 `8398a7/action-slack@v3`로 실패 시 Slack 알림 스텝 추가(`secrets.SLACK_WEBHOOK_URL` 필요). 로컬 HEADLESS=true 검증: Chrome 19 passed/1 failed(재시도 시 즉시 PASS, 알려진 광고 로딩 플레이키니스), Firefox 16 passed/4 failed(Task3에서 파악된 동일 패턴). 3개 커밋(✨ 장바구니+Firefox 지원, 🚀 CI 워크플로우, 📝 ROADMAP)으로 origin/main에 push 완료. 사용자 승인으로 gh CLI 설치·인증 후 실제 GitHub Actions 실행(run_id 30201769656)을 직접 조회해 검증함. **워크플로우 메커니즘 자체(matrix 2개 잡 트리거, HEADLESS 적용, 브라우저별 리포트 아티팩트 2종 정상 생성·다운로드)는 정상 동작 확인됨.** 그러나 실제 테스트 결과는 chrome/firefox **둘 다** 16 failed/2 passed/2 errors로 매우 낮았고, 두 브라우저의 실패 패턴이 거의 동일(로그인 이메일 입력창부터 못 찾음, 상품 검색 결과 0개 등)해 Firefox 고유 문제가 아니라 **CI 환경(GitHub Actions 클라우드 IP 등)에서 automationexercise.com 접근이 로컬과 다르게 동작하는 별도의 심층 이슈로 추정**(원인 미확정, 추가 조사 필요). Slack 알림 스텝도 `SLACK_WEBHOOK_URL` 시크릿이 아직 등록되지 않아 "Specify secrets.SLACK_WEBHOOK_URL" 오류로 실패함(사용자가 GitHub 저장소 설정에서 직접 추가해야 하는 민감정보라 에이전트가 대신 처리하지 않음). 사용자가 "워크플로우 수정만으로 Task4 마무리, CI 대량 실패 문제는 별도 기록"을 명시적으로 선택함 — **워크플로우 수정은 완료, 실제 CI 정상 동작은 미해결**(섹션 5 신규 블로커 참고)
+- [x] 성능 테스트 요구사항 정의 문서화 (실제 성능 테스트 구현은 범위 밖 유지, project-prd.md §8.3, §6.1) — shrimp-task-manager **Task5(96점, automation-prd-writer 위임)** 완료 확인됨. `docs/prd/project-prd.md` v1.2 → v1.3 갱신. §8.3(Phase 3) 산출물에 "성능 테스트 요구사항 정의 문서(§8.3.1, 참고용)" 추가. 신설된 §8.3.1 "성능 테스트 요구사항 정의(참고용 — MVP 범위 외)"에 측정 지표 범주 4종, 측정 후보 대상 6개(기존 자동화 흐름과 연결), 구현 도구 후보(Locust/k6/Lighthouse 등, 미확정) 기술. 측정 임계치는 전부 "미확정 — 확인 필요"로 명시(임의 수치 생성 없음). §6.1의 기존 "성능 테스트 MVP 제외" 서술은 한 글자도 수정하지 않고 유지, §8.3.1 본문에 두 섹션이 시점상 충돌하지 않음을 명시적으로 설명. 실제 성능 테스트 코드는 작성하지 않음(문서화만)
 
-**Phase 3 산출물**: 확장 시나리오 반영된 기능별 PRD 업데이트(필요 시 automation-prd-writer에 요청), Firefox 테스트 구성, 최종 CI/CD 워크플로우
+**참고(Task6, 최종 점검)**: shrimp-task-manager Task6은 별도의 구현 산출물을 만드는 Task가 아니라 project-prd.md §14 성공 기준 전체를 저장소 실제 상태와 대조하는 최종 점검이었습니다. 이 점검에서 새로 발견된 사실(CI 대량 실패, README.md 부재, SLACK_WEBHOOK_URL 미등록, `logs/` 파일명 문서-구현 불일치)은 위 8개 항목에는 직접 포함되지 않으며, 섹션 5(블로커 트래킹)와 섹션 6(Phase 3 완료 조건)에 반영되어 있습니다.
+
+**Phase 3 산출물**: `conftest.py`(확장, `--browser` 옵션·`pytest_addoption`·창 크기 1920x1080 설정), `pages/base_page.py`(확장, `scroll_into_view()`/`click_element()` 추가), `config/settings.py`(확장, `PAGE_LOAD_TIMEOUT` 신설), `pages/account_created_page.py`/`home_page.py`/`signup_page.py`/`login_page.py`/`products_page.py`(대기 지점 `PAGE_LOAD_TIMEOUT` 적용), `.github/workflows/test.yml`(matrix `[chrome, firefox]`·`HEADLESS=true`·브라우저별 리포트 분리·Slack 알림 스텝 추가), `docs/prd/project-prd.md`(v1.2 → v1.3, §8.3.1 신설, automation-prd-writer 위임 산출물). **주의**: 회원가입/로그인/상품검색/장바구니 4개 검토 항목은 착수하지 않기로 결론이 났으므로 해당 기능별 PRD(`signup.md`, `login.md`, `product_search.md`, `shopping_cart.md`)는 이번 Phase 3에서 수정되지 않았습니다. README.md는 아직 산출물 목록에 없습니다(섹션 5 신규 블로커 참고).
 
 ---
 
@@ -172,6 +174,11 @@
 | 세션 타임아웃 시간 미확정 | Phase 3 "로그아웃 세션 만료 시나리오" 검토 Task | 프로젝트 전체 차원의 확인 필요 사항 (project-prd.md §19.1, logout.md §20). 확정되기 전까지 해당 Task는 착수하지 않음 |
 | `shopping_cart.md` §22 "project-prd.md 정합성 검토(사용자 승인 필요)" 항목 | 로드맵 진행에는 직접 영향 없음 (참고) | `project-prd.md`는 이미 v1.2에서 "장바구니 수량 변경" 서술을 "장바구니 상품 삭제"로 수정하여 `shopping_cart.md` v1.4와 동기화된 것으로 확인됨(§5.1, §8.2). 다만 `shopping_cart.md` 자체의 "다음 단계" 섹션에는 아직 미해결 항목으로 남아 있어, feature PRD 담당(automation-prd-writer)이 해당 문서의 해당 항목을 정리하는 것을 권장함 |
 | 로그인 상태에서 "Proceed to Checkout" 클릭 시 결제 페이지의 상세 동작 | 결제(Checkout) 기능 PRD 착수 (MVP 범위 밖) | MVP 이후 별도 checkout PRD 작성 시점에 확인 (shopping_cart.md §20, §22) |
+| **(신규)** CI 환경(GitHub Actions)에서 automationexercise.com 접근 시 chrome/firefox 모두 대량 테스트 실패(각 16 failed/2 passed/2 errors, run_id 30201769656) — 로컬 Chrome은 동일 시점 18 passed로 정상이라 CI 환경 고유 이슈로 추정되나 원인 미확정 | Phase 3 "CI 최종 점검" Task의 실질적 완료, project-prd.md §14.2(테스트 성공률)·§14.5(자동화 인프라 CI/CD 정상 동작) 성공 기준 최종 충족 | 원인 미확정 — 추가 조사 필요. 담당/시점 미정(다음 세션 또는 별도 조사 Task로 착수 권장) |
+| **(신규)** `SLACK_WEBHOOK_URL` 저장소 시크릿 미등록 | `.github/workflows/test.yml`의 Slack 실패 알림 스텝("Specify secrets.SLACK_WEBHOOK_URL" 오류로 현재 실패) | 사용자가 GitHub 저장소 Settings → Secrets에서 직접 등록 필요(민감정보이므로 에이전트가 대신 처리하지 않음) |
+| **(신규)** 저장소 루트에 `README.md` 파일이 존재하지 않음 (Task6에서 `ls` 명령으로 직접 확인) | project-prd.md §14.4 "README.md 포함(프로젝트 개요, 실행 방법)" 성공 기준 충족 | 작성 여부·시점 사용자 확인 필요 — 필요 시 별도 Task로 착수 |
+
+**참고(Phase 0 산출물, 이번 Phase 3 범위 밖이나 Task6에서 재확인됨)**: `utils/logger.py`의 실제 로그 파일은 `logs/test.log`(고정 파일명)인데 project-prd.md §13.3은 `logs/automation_test_*.log`(타임스탬프 패턴)로 서술하고 있어 문서-구현 간 사소한 불일치가 있습니다. 로드맵 진행에 직접 영향은 없어 이 표에 블로커 행으로 추가하지 않고 참고로만 기록합니다.
 
 **참고(정책 변경으로 표에서 제외된 항목)**: 기존에는 "전 기능 공통 UI 요소의 실제 id/name/data-* 속성 미공유"를 이 표에 블로커로 포함했으나, `CLAUDE.md` §6·`shrimp-rules.md` §5의 Playwright MCP 조사 절차 도입에 따라 더 이상 이 표에서 다루지 않습니다. 실제 Locator 미공유 자체는 Page Object 구현 착수를 막지 않으며, 1-D 상품 검색(`pages/products_page.py`)에서 이미 이 절차로 해소된 선례가 있습니다. Playwright MCP로도 확인이 불가능한 개별 요소(CLAUDE.md §6.4, shrimp-rules.md §5의 "되돌리기 어려운 동작" 등의 사유)가 실제로 발견되는 시점에만 그 항목을 이 표에 새 행으로 추가합니다.
 
@@ -201,10 +208,10 @@
 - [x] `pages/products_page.py`와 `pages/cart_page.py` 간 책임 분리가 shopping_cart.md §19 기준과 일치 (담기 진입은 ProductsPage, 조회/삭제/결제진입은 CartPage) — **완료 확인됨**: 설계 그대로 구현되어 ProductsPage는 담기 진입 메서드만, CartPage는 조회/삭제/결제진입 메서드만 보유함
 
 ### Phase 3 완료 조건
-- [ ] Phase 3 "검토" Task 6건에 대한 착수 여부 결정 및 결과 문서화(착수하지 않기로 한 경우 사유 기록)
-- [ ] Firefox 브라우저로 Phase 1~2 정상 시나리오 재실행 PASS
-- [ ] `.github/workflows/test.yml`이 매 커밋마다 정상 실행되고 리포트 아티팩트가 저장됨을 확인
-- [ ] 프로젝트 전체 성공 기준(project-prd.md §14) 충족 여부 최종 점검
+- [x] Phase 3 "검토" Task 5건(회원가입/로그인/상품검색/장바구니 자동화 확장 검토 4건 + 로그아웃 세션 만료 검토 1건)에 대한 착수 여부 결정 및 결과 문서화(착수하지 않기로 한 경우 사유 기록) — **완료 확인됨**: shrimp-task-manager Task1(95점)에서 4건 모두 각 기능 PRD 원문(signup.md §11·§20, login.md §12·§22, product_search.md §12, shopping_cart.md §12·§20)을 근거로 "착수하지 않음"으로 재검증·문서화됨. Task2(90점)에서 로그아웃 세션 만료 1건은 세션 타임아웃 미확정(project-prd.md §19.1)과 사용자의 명시적 제외 지시를 근거로 "착수하지 않음(보류)"으로 문서화됨. 5건 전부 결정과 사유가 문서화되었다는 의미에서 이 DoD 항목 자체는 충족되었으나, 보류된 1건(세션 만료)은 여전히 미해결 상태로 남아 있음(섹션 5 블로커 참고)
+- [ ] Firefox 브라우저로 Phase 1~2 정상 시나리오 재실행 PASS — **미충족**: Task3(85점)에서 `--browser` 옵션 및 크로스브라우저 대응 코드(스크롤 후 클릭, 1920x1080 창 크기, `PAGE_LOAD_TIMEOUT`)는 완성되어 Chrome은 18 passed로 재확인되었으나, Firefox는 로컬 7회 이상 반복 검증에서도 100% 안정적 통과를 달성하지 못했고(geckodriver 인프라 불안정성으로 판명), Task4(82점)의 실제 GitHub Actions 실행(run_id 30201769656)에서도 Firefox는 16 failed/2 passed/2 errors로 PASS 기준을 충족하지 못함
+- [ ] `.github/workflows/test.yml`이 매 커밋마다 정상 실행되고 리포트 아티팩트가 저장됨을 확인 — **미충족**: Task4(82점)에서 워크플로우 트리거·HEADLESS 적용·브라우저별 리포트 아티팩트 2종 생성/다운로드 등 **메커니즘 자체는 정상 동작**함을 실제 GitHub Actions 실행(run_id 30201769656)으로 확인했으나, 그 실행에서 나온 실제 테스트 결과가 chrome/firefox 둘 다 16 failed/2 passed/2 errors로 대량 실패해 "정상 실행"의 실질적 의미(테스트가 정상적으로 통과하며 실행됨)는 충족되지 않음. Slack 실패 알림 스텝도 `SLACK_WEBHOOK_URL` 시크릿 미등록으로 실패함
+- [ ] 프로젝트 전체 성공 기준(project-prd.md §14) 충족 여부 최종 점검 — **점검은 수행했으나 결과는 미충족**: shrimp-task-manager Task6에서 §14 전 항목을 실제 저장소 상태와 대조 점검함. §14.1(테스트 코드 완성도)·§14.3(코드 품질)은 기존과 동일하게 충족 유지. §14.2(테스트 성공률, "마지막 실행 기준 실패율 0%")는 로컬 Chrome 기준으로는 충족(18 passed)되나 **실제 GitHub Actions CI 실행 기준으로는 chrome/firefox 모두 대량 실패해 미충족**. §14.4(문서 완성도, "README.md 포함")는 **저장소 루트에 README.md 파일이 존재하지 않음을 `ls` 명령으로 직접 확인해 미충족**. §14.5(자동화 인프라)는 pytest 실행·pytest-html 리포트 생성·로깅/스크린샷 자동 저장은 충족되나 "GitHub Actions CI/CD 구성 완료"는 구성 자체는 완료되었어도 정상 동작까지는 §14.2와 동일한 사유로 미확인. 종합적으로 **project-prd.md §14 전체 성공 기준은 현재 미충족**(README.md 부재, CI 대량 실패가 핵심 근거)
 
 ---
 
@@ -212,13 +219,13 @@
 
 우선순위 순으로 착수를 권장하는 Task입니다.
 
-Phase 0(기반 설정), Phase 1(1-A 회원가입, 1-B 로그인, 1-C 로그아웃, 1-D 상품 검색), Phase 2(장바구니 및 결제 진입 제약 확인)는 구현·테스트 작성·PASS까지 모두 완료되었습니다. 다음 우선순위는 Phase 3(검증 및 안정성 강화) 착수입니다.
+Phase 0(기반 설정), Phase 1(1-A 회원가입, 1-B 로그인, 1-C 로그아웃, 1-D 상품 검색), Phase 2(장바구니 및 결제 진입 제약 확인)는 구현·테스트 작성·PASS까지 모두 완료되었습니다. Phase 3는 shrimp-task-manager MCP로 6개 Task로 분해해 모두 completed 처리되었으나, 검증 과정에서 새로 발견된 미해결 사항이 있어 다음 액션은 그 사항들을 해소하는 데 집중합니다.
 
-1. **Phase 3 "검토" Task 6건에 대한 착수 여부 결정 및 결과 문서화**: 회원가입/로그인/상품검색/장바구니 4건은 각 기능 PRD(signup.md §11·§20, login.md §12·§22, product_search.md §12, shopping_cart.md §12·§20)에서 이미 자동화 범위 제외로 확정되어 있으므로, 착수하지 않기로 한 사유를 그대로 기록하는 방식으로 정리 가능한지 우선 검토 (섹션 3 Phase 3 참고)
-2. **로그아웃 세션 만료 시나리오 검토의 선행 블로커 해소**: 세션 타임아웃 시간이 project-prd.md §19.1 기준으로 여전히 미확정이므로, 확정 전까지 해당 Phase 3 Task는 착수하지 않음(섹션 5 블로커 트래킹 표 참고) — 확정 여부를 사용자에게 확인
-3. **Firefox WebDriver 추가 및 크로스 브라우저 테스트 구성**: Phase 1~2 정상 시나리오를 Firefox에서 재실행하여 PASS 확인 (project-prd.md §8.3, §11.2, §18.2)
-4. **`.github/workflows/test.yml` 최종 점검**: 실패 시 알림, HTML 리포트 아티팩트 저장, 매 커밋 자동 실행 안정성 확인 (project-prd.md §11.3, §13.4)
-5. **성능 테스트 요구사항 정의 문서화**: 실제 성능 테스트 구현은 범위 밖으로 유지하되, 향후 확장을 위한 요구사항만 문서화 (project-prd.md §8.3, §6.1)
+1. **CI 환경(GitHub Actions)에서의 대량 테스트 실패 원인 조사**: 실제 GitHub Actions 실행(run_id 30201769656)에서 chrome/firefox 둘 다 16 failed/2 passed/2 errors로 실패했고 두 브라우저의 실패 패턴이 거의 동일해 브라우저 고유 문제가 아니라 CI 환경(클라우드 IP 등) 자체의 이슈로 추정됨. project-prd.md §14.2·§14.5 성공 기준의 실질적 충족을 위한 최우선 블로커이므로 원인 규명이 최우선 (섹션 5 블로커 트래킹 표 참고)
+2. **`SLACK_WEBHOOK_URL` 저장소 시크릿 등록 여부 결정 및 등록**: `.github/workflows/test.yml`의 Slack 실패 알림 스텝이 현재 시크릿 미등록으로 실패 중임. 사용자가 GitHub 저장소 Settings에서 직접 등록해야 하는 민감정보 작업 (섹션 5 블로커 트래킹 표 참고)
+3. **README.md 작성 여부 및 시점 결정**: 저장소 루트에 README.md가 존재하지 않아 project-prd.md §14.4 문서 완성도 기준이 미충족 상태임. 작성이 필요하다고 판단되면 별도 Task로 착수 (섹션 5 블로커 트래킹 표 참고)
+4. **세션 타임아웃 값 확정 여부 재확인**: project-prd.md §19.1 기준 여전히 미확정이며, 이번 세션에서는 사용자 지시로 보류된 상태. 확정되는 시점에 로그아웃 세션 만료 시나리오 검토 Task 재착수 가능 (섹션 5 블로커 트래킹 표 참고)
+5. **(참고, 추가 액션 불필요)** Firefox 로컬 반복 실행 시 발생하는 geckodriver 무응답 문제는 실험적으로 애플리케이션 코드 문제가 아닌 로컬 인프라 불안정성으로 판명되었으므로, 위 1번(CI 조사)의 결과로 최종 판단을 대체하는 방향이 합리적임
 
 ---
 
@@ -231,6 +238,7 @@ Phase 0(기반 설정), Phase 1(1-A 회원가입, 1-B 로그인, 1-C 로그아�
 - **v1.4 (2026-07-25)**: Phase 1 통합 검증(T22) 완료를 반영. 사용자가 직접 실행/확인한 검증 결과(T21에서 `tests/test_product_search.py` 신규 작성 완료로 4개 기능 12개 시나리오 전부 테스트 케이스화, T11~T21 전 구간 Playwright MCP 보조 검증 수행 기록 확인, `pytest tests/test_signup.py tests/test_login.py tests/test_logout.py tests/test_product_search.py --html=reports/report.html` 실행 결과 12 passed·실패 0건, 로그인 계정·Name 일치 재확인, 실제 실패 사례에서 `screenshots/` 자동 저장 6건 확인, `reports/report.html` 생성 확인)를 근거로 섹션 6 "Phase 1 완료 조건" 6개 항목을 모두 미체크 → 체크 완료로 갱신하고 각 항목의 설명 문구를 실제 검증 결과로 교체. 섹션 2 마일스톤 요약 표의 Phase 1 상태를 `🟨 진행중 약 80%` → `✅ 완료 100%`로 갱신. 섹션 7 "다음 액션"을 Phase 1 잔여 Task 중심에서 Phase 2(장바구니) 착수 Task(`pages/products_page.py` 확장, `pages/cart_page.py` 신규 구현, `test_data/products.json` 작성, `tests/test_shopping_cart.py` 작성·실행, Phase 2 통합 검증) 중심으로 전면 교체. 이번 갱신은 섹션 2(Phase 1 행)·섹션 6(Phase 1)·섹션 7·본 변경 이력 항목에 한정되며, 섹션 3의 Phase 1 세부 Task 체크박스(1-D의 `search_keywords.json`/`test_product_search.py` 항목, "Phase 1 산출물" 목록의 "미작성" 표기 등)와 Phase 0/2/3, 섹션 4, 섹션 5 블로커 트래킹 표는 이번 갱신 범위에서 제외되어 그대로 유지됨. **참고**: 이로 인해 섹션 3의 1-D 관련 체크박스 및 "Phase 1 산출물" 목록 문구가 섹션 6과 일시적으로 불일치하는 상태이며(예: `tests/test_product_search.py(미작성)` 표기가 아직 남아 있음), 이는 다음 갱신 시 함께 정리가 필요함.
 - **v1.5 (2026-07-25)**: v1.4에서 남겨두었던 섹션 3-섹션 6 불일치를 보완. 섹션 3의 "1-D. 상품 검색" Task 목록 중 `test_data/search_keywords.json` 작성, `tests/test_product_search.py` 작성 두 항목을 `[ ]` → `[x]`로 갱신(T21에서 작성 완료 및 PASS 확인, T22 통합 실행에서 재확인된 근거 반영). "Phase 1 산출물" 목록의 `tests/test_product_search.py(미작성)` 표기를 완료된 산출물 표기로 수정. 이번 보완은 섹션 3의 해당 두 체크박스와 산출물 목록 문구에 한정되며, 그 외 섹션은 변경하지 않음.
 - **v1.6 (2026-07-26)**: Phase 2(장바구니 및 결제 진입 제약 확인) 완료를 반영. shrimp-task-manager MCP로 Phase 2를 7개 Task로 분해해 순차 실행했고, 7개 Task 모두 `execute_task` → 구현 → `verify_task`(80점 이상, Task1 95점/Task2 100점/Task3 100점/Task4 92점/Task5 93점/Task6 100점/Task7 96점)로 completed 처리된 이력을 근거로 갱신함. 섹션 2 마일스톤 요약 표의 Phase 2 상태를 `⬜ 예정 0%` → `✅ 완료 100%`로 갱신. 섹션 3 "Phase 2" 하위 전 체크박스를 `[x]`로 갱신하고, `tests/test_shopping_cart.py`의 NOR-001~005/ABN-001~002 각 항목에 실제 매핑된 테스트 함수명(`test_add_product_to_cart_from_products_page`, `test_add_product_to_cart_from_detail_page_with_quantity`, `test_delete_product_from_cart`, `test_duplicate_add_increases_quantity`, `test_guest_checkout_shows_login_modal`, `test_empty_cart_shows_message`)을 추가. "Phase 2 산출물" 목록을 실제 산출물(`pages/products_page.py` 확장, `pages/cart_page.py` 신규, `pages/base_page.py` 확장, `utils/helpers.py` 확장, `test_data/products.json` 신규, `conftest.py` 확장, `tests/test_shopping_cart.py` 신규)로 갱신. 섹션 6 "Phase 2 완료 조건" 4개 항목을 모두 체크 완료 처리하고, `pytest tests/test_shopping_cart.py -v`(6 passed, 26.62s) 및 Phase 1~2 통합 실행(`pytest tests/test_signup.py tests/test_login.py tests/test_logout.py tests/test_product_search.py tests/test_shopping_cart.py --html=reports/report.html`, 18 passed·0 failed·93.61s) 결과를 근거로 명시. 섹션 7 "다음 액션"을 Phase 3(검증 및 안정성 강화) 착수 관점으로 전면 교체. **[계획 외 발견 사항]** (1) Task3 실행 중 실제 사이트의 광고 스크립트(`class="google-anno"`)가 상품명 텍스트에 여분의 공백을 삽입하는 문제를 발견하여, 계획에 없던 `utils/helpers.py`의 `normalize_whitespace(text: str) -> str` 함수가 추가로 구현됨(섹션 3 Phase 2 Task 목록·산출물에 반영). (2) 삭제(X 아이콘)·"Proceed To Checkout" 클릭처럼 "되돌리기 어려운 동작"에 대해 CLAUDE.md §6.4·shrimp-rules.md §5에 따라 실클릭 전 AskUserQuestion으로 사용자 확인을 받는 절차가 Task1에서 실제로 정상 동작함을 확인함(사용자가 "둘 다 허용" 응답 후 실클릭으로 검증 완료). (3) 통합 실행 1차 시도에서 `test_signup_then_logout_and_relogin` 1건이 사이트 광고 인터스티셜로 인한 타임아웃으로 실패했으나, Phase 2 변경과 무관한 Phase 1 기존 코드의 플레이키 이슈로 판명되어 단독 재실행 시 즉시 PASS로 재현됨을 재확인함(ROADMAP.md 기존 버전 섹션 6 Phase 1 완료 조건에 이미 기록된 것과 동일 종류의 현상). 섹션 5 블로커 트래킹 표는 이번 갱신으로 정리가 필요한 Phase 2 관련 행이 없음을 확인하여(Locator 미공유 관련 정책 변경은 v1.2에서 이미 반영됨, `shopping_cart.md` §22 project-prd.md 정합성 검토 항목은 Phase 진행에 직접 영향이 없어 그대로 유지) 변경하지 않음. 섹션 3의 Phase 0/1 내용, 섹션 4(기능 의존성 개요), 섹션 5(블로커 트래킹 표)는 이번 갱신 범위에서 제외되어 그대로 유지됨.
+- **v1.7 (2026-07-26)**: Phase 3(검증 및 안정성 강화) 진행 결과를 반영. shrimp-task-manager MCP로 Phase 3를 6개 Task로 분해해 순차 실행했고, 6개 Task 모두 `execute_task` → 구현/조사 → `verify_task`(80점 이상, Task1 95점/Task2 90점/Task3 85점/Task4 82점/Task5 96점, Task6은 별도 산출물 없는 최종 점검)로 completed 처리된 이력을 근거로 갱신함. **Phase 3는 완료로 표기하지 않음** — 검증 과정에서 (1) 실제 GitHub Actions CI 실행(run_id 30201769656)에서 chrome/firefox 둘 다 대량 테스트 실패(각 16 failed/2 passed/2 errors), (2) Firefox 로컬 100% 안정적 통과 미달성(geckodriver 인프라 불안정성으로 판명, CI 검증으로 이관), (3) 저장소 루트에 README.md 파일 부재(project-prd.md §14.4 미충족), (4) `SLACK_WEBHOOK_URL` 시크릿 미등록으로 Slack 알림 미동작 등 4건의 미해결 사항이 새로 확인되었기 때문. 섹션 2 마일스톤 요약 표의 Phase 3 상태를 `⬜ 예정 0%` → `🟨 진행중 약 70%`로 갱신하고 근거를 상세 기술. 섹션 3 "Phase 3" 하위 8개 항목을 갱신: 회원가입/로그인/상품검색/장바구니 자동화 확장 검토 4건은 Task1(95점)에서 각 기능 PRD 원문 근거로 재검증되어 착수 불필요로 결론 확정되어 `[x]`로 체크, 로그아웃 세션 만료 검토 1건은 Task2(90점)에서 세션 타임아웃 여전히 미확정 + 사용자의 명시적 제외 지시로 `[ ]` 유지, Firefox 크로스 브라우저 1건은 Task3(85점)에서 코드는 완성되었으나 로컬 100% 안정성 미달성으로 "부분 완료" 표기하며 `[ ]` 유지, CI 최종 점검 1건은 Task4(82점)에서 워크플로우 수정 자체는 완료되었으나 실제 CI 대량 실패가 미해결로 "부분 완료" 표기하며 `[ ]` 유지, 성능 테스트 요구사항 정의 1건은 Task5(96점, automation-prd-writer 위임)로 project-prd.md v1.2 → v1.3 갱신·§8.3.1 신설이 완료되어 `[x]`로 체크. Task3에서 발견·수정된 크로스브라우저 버그 3건(광고 iframe 클릭 가로채기 → `scroll_into_view()`/`click_element()` 추가, 1920x1080 창 크기 미구현 결함 수정, `PAGE_LOAD_TIMEOUT`(20초) 신설 및 5개 페이지 전환 대기 지점 적용)을 "Phase 3 산출물" 목록에 반영. 섹션 5 블로커 트래킹 표에 신규 항목 3건(CI 환경 대량 실패 원인 미확정, `SLACK_WEBHOOK_URL` 시크릿 미등록, README.md 부재)을 추가하고, `logs/test.log` vs project-prd.md §13.3 `logs/automation_test_*.log` 문서-구현 불일치를 참고 각주로 추가(Phase 0 산출물이라 블로커 행으로는 추가하지 않음). 세션 타임아웃 미확정 행은 새로운 사실이 없어 변경하지 않고 그대로 유지. 섹션 6 "Phase 3 완료 조건" 4개 항목을 갱신: "검토 Task 착수 여부 결정·문서화" 항목은 5건 전부 결정·사유 문서화가 완료되어 `[x]`, 나머지 3개 항목("Firefox PASS", "CI 정상 실행 확인", "project-prd.md §14 성공 기준 최종 점검")은 모두 미충족 근거(Firefox CI 결과 16 failed/2 passed/2 errors, README.md 부재, CI 대량 실패)를 명시하며 `[ ]` 유지. 섹션 7 "다음 액션"을 신규 블로커 3건(CI 대량 실패 원인 조사, Slack 시크릿 등록, README.md 작성 여부 결정) 및 기존 블로커(세션 타임아웃 확정) 중심으로 전면 교체. 섹션 1 "기준 문서 및 버전" 표의 `project-prd.md` 버전을 v1.2 → v1.3으로 동기화(project-prd.md가 이번에 Task5로 v1.3으로 갱신되었으므로). 이번 갱신은 섹션 1(project-prd.md 버전)·섹션 2(Phase 3 행)·섹션 3(Phase 3 Task 목록·산출물)·섹션 5(블로커 표)·섹션 6(Phase 3 완료 조건)·섹션 7(다음 액션)·본 변경 이력 항목에 한정되며, Phase 0/1/2 관련 내용과 섹션 4(기능 의존성 개요)는 이번 갱신 범위에서 제외되어 그대로 유지됨.
 
 ---
 
