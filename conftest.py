@@ -122,9 +122,11 @@ def cart_test_product_secondary(products_data):
 def pytest_runtest_makereport(item, call):
   outcome = yield
   report = outcome.get_result()
-  if report.when == "call" and report.failed:
+  if report.when in ("call", "setup") and report.failed:
     driver_fixture = item.funcargs.get("driver")
     if driver_fixture:
       timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-      filename = f"screenshots/{item.name}_failed_{timestamp}.png"
-      driver_fixture.save_screenshot(filename)
+      base_filename = f"screenshots/{item.name}_failed_{timestamp}"
+      driver_fixture.save_screenshot(f"{base_filename}.png")
+      with open(f"{base_filename}.html", "w", encoding="utf-8") as f:
+        f.write(driver_fixture.page_source)

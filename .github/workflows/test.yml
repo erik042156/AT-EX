@@ -19,6 +19,9 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Check site reachability (diagnostic only)
+        run: curl -sS -o /dev/null -w "HTTP %{http_code}\n" https://automationexercise.com/login || true
+
       - name: Run pytest
         env:
           HEADLESS: "true"
@@ -30,6 +33,14 @@ jobs:
         with:
           name: reports-${{ matrix.browser }}
           path: reports/
+
+      - name: Upload failure screenshots and page source
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ matrix.browser }}
+          path: screenshots/
+          if-no-files-found: ignore
 
       - name: Notify Slack on failure
         if: failure()
