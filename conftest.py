@@ -3,10 +3,16 @@ from datetime import datetime
 
 import pytest
 from selenium import webdriver
+from selenium.common.exceptions import ElementClickInterceptedException, TimeoutException
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
 from config.settings import HEADLESS
+from pages.home_page import HomePage
 from pages.login_page import LoginPage
+from utils.helpers import generate_random_email
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 ACCOUNTS_DATA_PATH = "test_data/accounts.json"
 SEARCH_KEYWORDS_DATA_PATH = "test_data/search_keywords.json"
@@ -41,14 +47,30 @@ def accounts_data():
     return json.load(f)
 
 
-@pytest.fixture
-def valid_signup_data(accounts_data):
-  return accounts_data["signup"]["valid_signup"]
+def _cleanup_signup_account(driver) -> None:
+  home_page = HomePage(driver)
+  if not home_page.is_delete_account_link_displayed():
+    return
+  try:
+    home_page.click_delete_account_link()
+  except (TimeoutException, ElementClickInterceptedException) as e:
+    logger.warning(f"테스트 종료 후 계정 정리(Delete Account) 실패: {str(e)}")
 
 
 @pytest.fixture
-def relogin_signup_data(accounts_data):
-  return accounts_data["signup"]["relogin_signup"]
+def valid_signup_data(driver, accounts_data):
+  data = dict(accounts_data["signup"]["valid_signup"])
+  data["email"] = generate_random_email()
+  yield data
+  _cleanup_signup_account(driver)
+
+
+@pytest.fixture
+def relogin_signup_data(driver, accounts_data):
+  data = dict(accounts_data["signup"]["relogin_signup"])
+  data["email"] = generate_random_email()
+  yield data
+  _cleanup_signup_account(driver)
 
 
 @pytest.fixture

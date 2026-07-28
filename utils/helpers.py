@@ -1,5 +1,11 @@
 # 화면과 무관한 공통 유틸리티 함수를 이곳에 추가한다 (2회 이상 반복되는 로직만)
 import re
+import uuid
+
+
+def generate_random_email(prefix: str = "test") -> str:
+  """회원가입 테스트용 고유 이메일 생성 (실행마다 값이 달라 실사이트 중복 등록과 무관해짐)"""
+  return f"{prefix}_{uuid.uuid4().hex[:10]}@example.com"
 
 
 def parse_price_text(price_text: str) -> int:
