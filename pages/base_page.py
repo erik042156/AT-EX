@@ -28,6 +28,23 @@ if (!top || top === arguments[0] || arguments[0].contains(top) || top.contains(a
 return top;
 """
 
+_FULL_PAGE_OVERLAY_SCRIPT = """
+const elements = document.body.querySelectorAll('*');
+let removed = 0;
+for (const el of elements) {
+  const style = window.getComputedStyle(el);
+  if (style.position !== 'fixed' && style.position !== 'absolute') continue;
+  const rect = el.getBoundingClientRect();
+  if (rect.width >= window.innerWidth * 0.5 && rect.height >= window.innerHeight * 0.5) {
+    el.remove();
+    removed += 1;
+  }
+}
+return removed;
+"""
+
+_OVERLAY_DISMISS_CHUNK_SECONDS = 5
+
 
 class BasePage:
   def __init__(self, driver: WebDriver) -> None:
@@ -102,15 +119,28 @@ class BasePage:
       logger.warning(f"클릭이 다른 요소에 가로채짐, JS 클릭으로 재시도: {locator}, {str(e)}")
       self.driver.execute_script("arguments[0].click();", element)
 
+  def _dismiss_full_page_overlay(self) -> int:
+    removed = self.driver.execute_script(_FULL_PAGE_OVERLAY_SCRIPT)
+    if removed:
+      logger.warning(f"화면 전체를 덮는 오버레이 {removed}개를 제거함(광고/설문 등으로 추정)")
+    return removed
+
   def wait_for_element_presence(
     self, locator: Locator, timeout: Optional[int] = None
   ) -> WebElement:
-    wait = WebDriverWait(self.driver, timeout or DEFAULT_TIMEOUT)
-    try:
-      return wait.until(EC.presence_of_element_located(locator))
-    except TimeoutException as e:
-      logger.error(f"요소가 DOM에 나타나기를 기다리는 중 타임아웃 발생: {locator}, {str(e)}")
-      raise
+    remaining = timeout or DEFAULT_TIMEOUT
+    last_exception: Optional[TimeoutException] = None
+    while remaining > 0:
+      step = min(_OVERLAY_DISMISS_CHUNK_SECONDS, remaining)
+      wait = WebDriverWait(self.driver, step)
+      try:
+        return wait.until(EC.presence_of_element_located(locator))
+      except TimeoutException as e:
+        last_exception = e
+        self._dismiss_full_page_overlay()
+        remaining -= step
+    logger.error(f"요소가 DOM에 나타나기를 기다리는 중 타임아웃 발생: {locator}, {str(last_exception)}")
+    raise last_exception
 
   def wait_for_text(self, locator: Locator, text: str, timeout: Optional[int] = None) -> bool:
     wait = WebDriverWait(self.driver, timeout or DEFAULT_TIMEOUT)
