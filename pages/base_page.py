@@ -1,6 +1,10 @@
 from typing import Optional, Tuple
 
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import (
+  ElementClickInterceptedException,
+  NoSuchElementException,
+  TimeoutException,
+)
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
@@ -12,6 +16,17 @@ from utils.logger import get_logger
 logger = get_logger(__name__)
 
 Locator = Tuple[str, str]
+
+_INTERCEPTING_ELEMENT_SCRIPT = """
+const rect = arguments[0].getBoundingClientRect();
+const x = rect.left + rect.width / 2;
+const y = rect.top + rect.height / 2;
+const top = document.elementFromPoint(x, y);
+if (!top || top === arguments[0] || arguments[0].contains(top) || top.contains(arguments[0])) {
+  return null;
+}
+return top;
+"""
 
 
 class BasePage:
@@ -60,15 +75,32 @@ class BasePage:
       logger.error(f"요소가 보이기를 기다리는 중 타임아웃 발생: {locator}, {str(e)}")
       raise
 
+  def _get_intercepting_element(self, element: WebElement) -> Optional[WebElement]:
+    return self.driver.execute_script(_INTERCEPTING_ELEMENT_SCRIPT, element)
+
   def click_when_clickable(self, locator: Locator, timeout: Optional[int] = None) -> None:
     wait = WebDriverWait(self.driver, timeout or DEFAULT_TIMEOUT)
     try:
       element = wait.until(EC.element_to_be_clickable(locator))
-      self.scroll_into_view(element)
-      element.click()
     except TimeoutException as e:
       logger.error(f"요소가 클릭 가능해지기를 기다리는 중 타임아웃 발생: {locator}, {str(e)}")
       raise
+
+    self.scroll_into_view(element)
+    blocker = self._get_intercepting_element(element)
+    if blocker is not None:
+      logger.warning(
+        f"클릭 대상을 다른 요소가 가리고 있어 JS 클릭으로 우회함: {locator}, "
+        f"blocker=<{blocker.tag_name} class='{blocker.get_attribute('class')}'>"
+      )
+      self.driver.execute_script("arguments[0].click();", element)
+      return
+
+    try:
+      element.click()
+    except ElementClickInterceptedException as e:
+      logger.warning(f"클릭이 다른 요소에 가로채짐, JS 클릭으로 재시도: {locator}, {str(e)}")
+      self.driver.execute_script("arguments[0].click();", element)
 
   def wait_for_element_presence(
     self, locator: Locator, timeout: Optional[int] = None
