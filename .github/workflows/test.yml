@@ -5,10 +5,6 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        browser: [chrome, firefox]
     steps:
       - uses: actions/checkout@v4
 
@@ -25,20 +21,20 @@ jobs:
       - name: Run pytest
         env:
           HEADLESS: "true"
-        run: pytest tests/ --browser=${{ matrix.browser }} --html=reports/report-${{ matrix.browser }}.html
+        run: pytest tests/ --html=reports/report.html
 
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: reports-${{ matrix.browser }}
+          name: reports
           path: reports/
 
       - name: Upload failure screenshots and page source
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: screenshots-${{ matrix.browser }}
+          name: screenshots
           path: screenshots/
           if-no-files-found: ignore
 
@@ -48,6 +44,6 @@ jobs:
         with:
           status: ${{ job.status }}
           fields: repo,message,commit,author,ref,workflow,job
-          text: "[${{ matrix.browser }}] 테스트 실패"
+          text: "테스트 실패"
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

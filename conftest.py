@@ -4,7 +4,6 @@ from datetime import datetime
 import pytest
 from selenium import webdriver
 from selenium.common.exceptions import ElementClickInterceptedException, TimeoutException
-from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
 from config.settings import HEADLESS
 from pages.home_page import HomePage
@@ -19,23 +18,12 @@ SEARCH_KEYWORDS_DATA_PATH = "test_data/search_keywords.json"
 PRODUCTS_DATA_PATH = "test_data/products.json"
 
 
-def pytest_addoption(parser):
-  parser.addoption("--browser", action="store", default="chrome", help="chrome 또는 firefox")
-
-
 @pytest.fixture(scope="function")
-def driver(request):
-  browser = request.config.getoption("--browser")
-  if browser == "firefox":
-    options = FirefoxOptions()
-    if HEADLESS:
-      options.add_argument("--headless")
-    drv = webdriver.Firefox(options=options)
-  else:
-    options = webdriver.ChromeOptions()
-    if HEADLESS:
-      options.add_argument("--headless=new")
-    drv = webdriver.Chrome(options=options)
+def driver():
+  options = webdriver.ChromeOptions()
+  if HEADLESS:
+    options.add_argument("--headless=new")
+  drv = webdriver.Chrome(options=options)
   drv.set_window_size(1920, 1080)
   yield drv
   drv.quit()
