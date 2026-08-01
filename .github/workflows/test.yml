@@ -21,7 +21,9 @@ jobs:
       - name: Run pytest
         env:
           HEADLESS: "true"
-        run: pytest tests/ --html=reports/report.html 2>&1 | tee reports/pytest_output.log
+        run: |
+          set -o pipefail
+          pytest tests/ --html=reports/report.html 2>&1 | tee reports/pytest_output.log
 
       - name: Upload test reports
         if: always()
