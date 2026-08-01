@@ -21,7 +21,7 @@ jobs:
       - name: Run pytest
         env:
           HEADLESS: "true"
-        run: pytest tests/ --html=reports/report.html
+        run: pytest tests/ --html=reports/report.html 2>&1 | tee reports/pytest_output.log
 
       - name: Upload test reports
         if: always()
@@ -38,12 +38,21 @@ jobs:
           path: screenshots/
           if-no-files-found: ignore
 
+      - name: Extract failed test summary
+        if: failure()
+        run: |
+          {
+            echo "FAILED_TESTS<<EOF"
+            grep "^FAILED " reports/pytest_output.log || echo "(실패한 테스트를 로그에서 특정하지 못함 - Actions 로그 확인 필요)"
+            echo "EOF"
+          } >> "$GITHUB_ENV"
+
       - name: Notify Slack on failure
         if: failure()
         uses: 8398a7/action-slack@v3
         with:
           status: ${{ job.status }}
-          fields: repo,message,commit,author,ref,workflow,job
-          text: "테스트 실패"
+          fields: repo,commit,author,ref,workflow,job
+          text: "테스트 실패\n${{ env.FAILED_TESTS }}"
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
