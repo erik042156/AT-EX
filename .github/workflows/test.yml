@@ -3,71 +3,25 @@ name: Test
 on: [push, pull_request]
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+  attempt-1:
+    uses: ./.github/workflows/_run-e2e-tests.yml
+    with:
+      attempt: "1"
+    secrets: inherit
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+  attempt-2:
+    needs: attempt-1
+    if: needs.attempt-1.result == 'failure'
+    uses: ./.github/workflows/_run-e2e-tests.yml
+    with:
+      attempt: "2"
+    secrets: inherit
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Check site reachability (diagnostic only)
-        run: |
-          response=$(curl -sS -w '\n%{http_code}' https://automationexercise.com/login || true)
-          status="${response##*$'\n'}"
-          body="${response%$'\n'*}"
-          echo "HTTP $status"
-          if echo "$body" | grep -qi "cloudflare\|one moment, please\|checking your browser\|verify you are human"; then
-            echo "::warning::응답 본문에서 Cloudflare 챌린지/봇 검증 페이지로 추정되는 문구가 감지되었습니다(HTTP 상태코드는 $status로 정상). 이번 실행에서 pytest가 대량 실패하면 코드 문제가 아니라 이 봇 차단 때문일 가능성이 높습니다."
-          fi
-
-      - name: Run pytest
-        uses: nick-fields/retry@v3
-        env:
-          HEADLESS: "true"
-        with:
-          timeout_minutes: 8
-          max_attempts: 3
-          retry_wait_seconds: 30
-          shell: bash
-          command: |
-            set -o pipefail
-            pytest tests/ --html=reports/report.html 2>&1 | tee reports/pytest_output.log
-
-      - name: Upload test reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: reports
-          path: reports/
-
-      - name: Upload failure screenshots and page source
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: screenshots
-          path: screenshots/
-          if-no-files-found: ignore
-
-      - name: Extract failed test summary
-        if: failure()
-        run: |
-          {
-            echo "FAILED_TESTS<<EOF"
-            python3 .github/scripts/extract_failed_tests.py
-            echo "EOF"
-          } >> "$GITHUB_ENV"
-
-      - name: Notify Slack on failure
-        if: failure()
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ job.status }}
-          fields: repo,commit,author,ref,workflow,job
-          text: "테스트 실패\n${{ env.FAILED_TESTS }}"
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  attempt-3:
+    needs: attempt-2
+    if: needs.attempt-2.result == 'failure'
+    uses: ./.github/workflows/_run-e2e-tests.yml
+    with:
+      attempt: "3"
+      notify_on_failure: "true"
+    secrets: inherit

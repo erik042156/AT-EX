@@ -1,11 +1,13 @@
 import json
+import urllib.request
 from datetime import datetime
+from urllib.error import URLError
 
 import pytest
 from selenium import webdriver
 from selenium.common.exceptions import ElementClickInterceptedException, TimeoutException
 
-from config.settings import HEADLESS
+from config.settings import BASE_URL, HEADLESS
 from pages.home_page import HomePage
 from pages.login_page import LoginPage
 from utils.helpers import generate_random_email
@@ -16,6 +18,26 @@ logger = get_logger(__name__)
 ACCOUNTS_DATA_PATH = "test_data/accounts.json"
 SEARCH_KEYWORDS_DATA_PATH = "test_data/search_keywords.json"
 PRODUCTS_DATA_PATH = "test_data/products.json"
+
+CLOUDFLARE_CHALLENGE_MARKERS = (
+  "cloudflare",
+  "one moment, please",
+  "checking your browser",
+  "verify you are human",
+)
+
+
+def pytest_sessionstart(session):
+  try:
+    with urllib.request.urlopen(BASE_URL, timeout=10) as response:
+      body = response.read().decode("utf-8", errors="ignore").lower()
+  except URLError as e:
+    logger.warning(f"사전 리치빌리티 체크 접속 실패, 테스트는 계속 진행합니다: {str(e)}")
+    return
+
+  if any(marker in body for marker in CLOUDFLARE_CHALLENGE_MARKERS):
+    logger.error("세션 시작 전 Cloudflare 챌린지/봇 검증 페이지가 감지되어 테스트 세션을 즉시 중단합니다.")
+    pytest.exit("Cloudflare 챌린지 감지로 테스트 세션 중단", returncode=75)
 
 
 @pytest.fixture(scope="function")
