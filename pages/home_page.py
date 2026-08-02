@@ -1,14 +1,9 @@
-from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
 
 from config.settings import PAGE_LOAD_TIMEOUT
 from pages.base_page import BasePage, Locator
 from pages.delete_account_page import DeleteAccountPage
-from utils.logger import get_logger
-
-logger = get_logger(__name__)
 
 
 class HomePage(BasePage):
@@ -27,18 +22,15 @@ class HomePage(BasePage):
     return self.is_element_displayed(self.DELETE_ACCOUNT_LINK)
 
   def click_delete_account_link(self) -> None:
-    self.click_when_clickable(self.DELETE_ACCOUNT_LINK)
-    self.wait_for_element_presence(DeleteAccountPage.ACCOUNT_DELETED_MESSAGE, timeout=PAGE_LOAD_TIMEOUT)
+    self.click_and_wait(
+      self.DELETE_ACCOUNT_LINK,
+      EC.presence_of_element_located(DeleteAccountPage.ACCOUNT_DELETED_MESSAGE),
+      timeout=PAGE_LOAD_TIMEOUT,
+    )
 
   def get_logged_in_username(self) -> str:
     text = self.find_element(self.LOGGED_IN_AS_TEXT).text
     return text.replace("Logged in as", "").strip()
 
   def click_logout_link(self) -> None:
-    self.click_when_clickable(self.LOGOUT_LINK)
-    wait = WebDriverWait(self.driver, PAGE_LOAD_TIMEOUT)
-    try:
-      wait.until(EC.url_contains("/login"))
-    except TimeoutException as e:
-      logger.error(f"로그아웃 후 /login 이동을 기다리는 중 타임아웃 발생: {str(e)}")
-      raise
+    self.click_and_wait(self.LOGOUT_LINK, EC.url_contains("/login"), timeout=PAGE_LOAD_TIMEOUT)
