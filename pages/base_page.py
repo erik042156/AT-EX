@@ -54,6 +54,10 @@ function isLargeIframe(el) {
   return rect.width * rect.height >= window.innerWidth * window.innerHeight * 0.3;
 }
 
+function isKnownSiteModal(el) {
+  return el.closest('.modal, .modal-content, .modal-dialog') !== null;
+}
+
 function findCloseButton(container) {
   const candidates = container.querySelectorAll('*');
   for (const el of candidates) {
@@ -69,6 +73,7 @@ const elements = document.body.querySelectorAll('*');
 let handled = 0;
 for (const el of elements) {
   if (!isLargeFixedOrAbsolute(el) && !hasHighZIndex(el) && !isLargeIframe(el)) continue;
+  if (isKnownSiteModal(el)) continue;
   const closeButton = findCloseButton(el);
   if (closeButton) {
     closeButton.click();
