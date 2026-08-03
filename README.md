@@ -88,6 +88,40 @@ pytest tests/ --html=reports/report.html
 | `tests/test_shopping_cart.py` | 장바구니 |
 | `tests/test_smoke.py` | 핵심 동작 스모크 테스트 |
 
+### 시나리오 상세
+
+**`test_signup.py` (회원가입, 2개)**
+- `test_signup_with_valid_info`: `/login`에서 이름/이메일 입력 → `/signup`에서 Name(수정 가능)/Email(수정 불가) 값 확인 → 나머지 정보 입력 후 계정 생성 → "Account Created!" 확인 → 헤더에 로그인 상태(Logout, 사용자명) 노출 확인 → 테스트 종료 시 계정 삭제로 정리
+- `test_signup_then_logout_and_relogin`: 회원가입 직후 로그아웃 → `/login` 이동 확인 → 같은 계정으로 재로그인 성공 확인 → 계정 정리
+
+**`test_login.py` (로그인, 4개)**
+- `test_login_with_valid_credentials`: 유효 계정 로그인 시 헤더에 Logout·사용자명 노출 확인 (정상)
+- `test_login_with_invalid_password`: 잘못된 비밀번호 입력 시 오류 메시지와 `/login` 유지 확인 (비정상)
+- `test_login_with_nonexistent_email`: 존재하지 않는 이메일 입력 시 오류 메시지와 `/login` 유지 확인 (비정상)
+- `test_relogin_after_logout`: 로그인 → 로그아웃 → 재로그인 전체 흐름 확인
+
+**`test_logout.py` (로그아웃, 2개)**
+- `test_logout_from_logged_in_state`: 로그아웃 시 `/login` 이동, Signup/Login 노출, Delete Account·사용자명 소멸 확인
+- `test_logout_then_relogin`: 로그아웃 직후 재로그인 시 세션이 정상 재생성되는지 확인
+
+**`test_product_search.py` (상품 검색, 4개)**
+- `test_search_with_valid_keyword`: 유효 키워드 검색 시 1개 이상 결과 확인
+- `test_view_all_products_without_keyword`: 키워드 없이 전체 상품 개수(34개) 확인
+- `test_search_case_insensitive`: 대소문자 혼합/전체 대문자 키워드의 검색 결과 개수 동일성 확인
+- `test_search_with_nonexistent_keyword`: 존재하지 않는 키워드 검색 시 결과 0개 확인 (비정상)
+
+**`test_shopping_cart.py` (장바구니, 6개)**
+- `test_add_product_to_cart_from_products_page`: 목록 페이지에서 담기 → 수량(1)·가격·합계(Price×Quantity) 확인
+- `test_add_product_to_cart_from_detail_page_with_quantity`: 상세 페이지에서 수량 지정 담기 → 지정 수량 반영 확인
+- `test_delete_product_from_cart`: 담은 상품 삭제 → 목록에서 사라짐 확인
+- `test_duplicate_add_increases_quantity`: 동일 상품 재담기 시 별도 행이 아닌 기존 행 수량 증가(1→2) 확인
+- `test_guest_checkout_shows_login_modal`: 비로그인 상태로 결제 진입 시 로그인 안내 모달 노출, `/view_cart` 유지 확인
+- `test_empty_cart_shows_message`: 빈 장바구니 안내 문구 노출, 결제 버튼 미노출 확인
+
+**`test_smoke.py` (스모크, 2개)**
+- `test_driver_opens_and_closes`: WebDriver가 정상적으로 열리고 대상 사이트 접근 가능한지 확인
+- `test_base_page_wait_methods`: `BasePage`의 공통 Wait 메서드(`wait_for_element_presence`) 정상 동작 확인
+
 ## CI/CD
 
 `.github/workflows/test.yml`에서 push 시 자동으로 pytest를 실행하고, 실패 시 Slack으로 알림을 전송합니다.
